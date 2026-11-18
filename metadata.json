@@ -1,0 +1,11 @@
+{
+  "name": "Civic Issue Reporting and Resolution System",
+  "description": "Smart City Municipal Civic Portal with Citizen Reporting, Interactive GIS Maps, AI Classification & Priority Prediction, and Government Administration Analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
