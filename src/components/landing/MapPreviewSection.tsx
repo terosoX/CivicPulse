@@ -94,14 +94,23 @@ export default function MapPreviewSection({
       });
     });
 
+    const containerEl = mapContainerRef.current;
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerEl) {
+      observer = new ResizeObserver(() => {
+        mapInstanceRef.current?.invalidateSize();
+      });
+      observer.observe(containerEl);
+    }
+
     return () => {
-      // Keep map alive or clean on unmount
+      observer?.disconnect();
     };
   }, [complaints, onSelectComplaint, isDark]);
 
   return (
     <section className="py-12 sm:py-16 bg-[#F5F7FA] dark:bg-[#0B1120] border-b border-[#E5E7EB] dark:border-[#374151] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
@@ -110,7 +119,7 @@ export default function MapPreviewSection({
               <Layers className="w-3.5 h-3.5" />
               <span>Geographic Information System</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="fluid-section-title font-bold text-slate-900 dark:text-white">
               Citywide Civic Incident Distribution
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
@@ -120,7 +129,7 @@ export default function MapPreviewSection({
 
           <button
             onClick={onExploreMapClick}
-            className="px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium text-xs shadow-xs flex items-center gap-1.5 transition-colors self-start sm:self-auto shrink-0 cursor-pointer"
+            className="min-h-[40px] px-4 py-2 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-medium text-xs shadow-xs flex items-center gap-1.5 transition-colors self-start sm:self-auto shrink-0 cursor-pointer"
           >
             <span>Open Full GIS Map</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -129,24 +138,24 @@ export default function MapPreviewSection({
 
         {/* Embedded Map Container */}
         <div className="rounded-xl border border-[#E5E7EB] dark:border-[#374151] overflow-hidden bg-white dark:bg-[#111827] shadow-xs relative">
-          <div ref={mapContainerRef} className="h-80 sm:h-96 w-full z-10" />
+          <div ref={mapContainerRef} className="h-[280px] sm:h-96 lg:h-[420px] w-full z-10" />
 
           {/* Map Legend Overlay */}
-          <div className="absolute top-3 left-3 z-[400] bg-white/95 dark:bg-[#111827]/95 backdrop-blur-sm border border-[#E5E7EB] dark:border-[#374151] rounded-lg p-2.5 shadow-sm text-xs space-y-1.5">
-            <span className="font-semibold text-[11px] text-slate-700 dark:text-slate-200 block border-b border-slate-200 dark:border-slate-700 pb-1">
+          <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-[400] bg-white/95 dark:bg-[#111827]/95 backdrop-blur-sm border border-[#E5E7EB] dark:border-[#374151] rounded-lg p-2 sm:p-2.5 shadow-sm text-[10px] sm:text-xs space-y-1 sm:space-y-1.5 max-w-[165px] sm:max-w-none">
+            <span className="font-semibold text-[10px] sm:text-[11px] text-slate-700 dark:text-slate-200 block border-b border-slate-200 dark:border-slate-700 pb-1">
               Incident Status
             </span>
-            <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 border border-white shrink-0" />
-              <span>Active / In Progress</span>
+              <span className="truncate">Active / In Progress</span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 border border-white shrink-0" />
-              <span>Verified Resolved</span>
+              <span className="truncate">Verified Resolved</span>
             </div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px] text-slate-600 dark:text-slate-300">
               <span className="w-2.5 h-2.5 rounded-full bg-rose-600 border border-white shrink-0" />
-              <span>Critical Emergency</span>
+              <span className="truncate">Critical Emergency</span>
             </div>
           </div>
         </div>

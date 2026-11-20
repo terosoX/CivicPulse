@@ -36,6 +36,8 @@ export default function CitizenFeedbackModal({ complaint, onClose, onSubmitted }
     };
   }, [onClose]);
 
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -52,8 +54,18 @@ export default function CitizenFeedbackModal({ complaint, onClose, onSubmitted }
     }
     setErrorMessage(null);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setVerificationImage(reader.result as string);
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      setVerificationImage(dataUrl);
+      setUploadingPhoto(true);
+      try {
+        const uploaded = await api.uploadImage(dataUrl);
+        if (uploaded?.url) setVerificationImage(uploaded.url);
+      } catch {
+        // Fallback to dataUrl
+      } finally {
+        setUploadingPhoto(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -94,16 +106,16 @@ export default function CitizenFeedbackModal({ complaint, onClose, onSubmitted }
         className="bg-white dark:bg-[#111827] w-full max-w-md h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl overflow-hidden relative text-left transition-all"
       >
         {/* Sticky Header */}
-        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-4 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <div>
-              <h3 id="feedback-modal-title" className="font-bold text-base text-slate-900 dark:text-white leading-tight">
+            <div className="min-w-0">
+              <h3 id="feedback-modal-title" className="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-tight truncate">
                 {i18n.language === 'hi' ? 'नागरिक कार्य सत्यापन व समीक्षा' : 'Citizen Work Verification'}
               </h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 {i18n.language === 'hi' ? 'टिकट' : 'Ticket'} <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{complaint.ticketNumber}</span>
               </p>
             </div>
@@ -119,7 +131,7 @@ export default function CitizenFeedbackModal({ complaint, onClose, onSubmitted }
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-5">
           {errorMessage && (
             <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs">
               {errorMessage}
@@ -207,21 +219,25 @@ export default function CitizenFeedbackModal({ complaint, onClose, onSubmitted }
         </div>
 
         {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-3.5 border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-end gap-3">
+        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 pb-safe border-t border-[#E5E7EB] dark:border-[#374151] flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             {i18n.language === 'hi' ? 'रद्द करें' : 'Cancel'}
           </button>
           <button
             type="submit"
             form="feedback-form"
-            disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+            disabled={loading || uploadingPhoto}
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
-            {loading ? (i18n.language === 'hi' ? 'भेजा जा रहा है...' : 'Submitting...') : (i18n.language === 'hi' ? 'सत्यापन जमा करें व टिकट बंद करें' : 'Submit Verification & Close Ticket')}
+            {uploadingPhoto
+              ? (i18n.language === 'hi' ? 'फोटो अपलोड हो रही है...' : 'Uploading Photo...')
+              : loading
+              ? (i18n.language === 'hi' ? 'भेजा जा रहा है...' : 'Submitting...')
+              : (i18n.language === 'hi' ? 'सत्यापन जमा करें व टिकट बंद करें' : 'Submit Verification & Close Ticket')}
           </button>
         </div>
       </div>

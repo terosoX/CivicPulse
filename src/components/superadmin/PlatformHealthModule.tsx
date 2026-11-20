@@ -129,14 +129,14 @@ export default function PlatformHealthModule({
       {/* Latency & Token Usage Area Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Latency Trend */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div className="min-w-0 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-            <Zap className="w-4 h-4 text-amber-500" />
+            <Zap className="w-4 h-4 text-amber-500 shrink-0" />
             24-Hour API Latency (ms)
           </h3>
           <p className="text-xs text-slate-500 mb-4">Express API response duration across endpoints</p>
 
-          <div className="h-60 w-full">
+          <div className="h-56 sm:h-60 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={PERFORMANCE_TREND}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
@@ -158,14 +158,14 @@ export default function PlatformHealthModule({
         </div>
 
         {/* CivicPulse Local AI Consumption */}
-        <div className="bg-white dark:bg-[#111827] p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm">
+        <div className="min-w-0 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm">
           <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-emerald-500" />
+            <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
             CivicPulse AI Neural Processing
           </h3>
           <p className="text-xs text-slate-500 mb-4">Auto-triage, voice parsing, & chatbot assistant queries</p>
 
-          <div className="h-60 w-full">
+          <div className="h-56 sm:h-60 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={PERFORMANCE_TREND}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />
@@ -188,14 +188,14 @@ export default function PlatformHealthModule({
       </div>
 
       {/* Department Resolution SLA Performance Bar Chart */}
-      <div className="bg-white dark:bg-[#111827] p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm">
+      <div className="min-w-0 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm">
         <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-blue-500" />
+          <Clock className="w-4 h-4 text-blue-500 shrink-0" />
           Department Average Resolution Hours vs SLA Target
         </h3>
         <p className="text-xs text-slate-500 mb-4">Actual resolution turnaround times across municipal departments</p>
 
-        <div className="h-64 w-full">
+        <div className="h-56 sm:h-64 w-full min-w-0">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={stats?.departmentPerformance || []} margin={{ top: 10, right: 10, left: -10, bottom: 20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#374151' : '#E5E7EB'} />

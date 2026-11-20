@@ -81,7 +81,7 @@ export default function EnterpriseOverview({
     currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
   const adminShortName = user?.name ? user.name.split('(')[0].trim() : 'Administrator';
 
-  // Compute live complaint counts
+  // Compute live complaint counts strictly from DB records
   const totalCount = complaints.length;
   const pendingCount = complaints.filter(
     (c) => c.status === 'Submitted' || c.status === 'Pending' || c.status === 'Verified'
@@ -95,27 +95,59 @@ export default function EnterpriseOverview({
   const criticalSlaBreaches = complaints.filter(
     (c) => c.priority === 'Critical' && c.status !== 'Resolved' && c.status !== 'Closed'
   );
+  const resolutionRatePct = totalCount > 0 ? Math.round((resolvedCount / totalCount) * 100) : 0;
 
-  // 1. Complaints Over Time data (Responds to 30d vs 7d selection)
-  const complaintsOverTime =
-    timelineRange === '7d'
-      ? [
-          { period: 'Mon', reported: 9, resolved: 7, target: 8 },
-          { period: 'Tue', reported: 12, resolved: 10, target: 10 },
-          { period: 'Wed', reported: 14, resolved: 13, target: 12 },
-          { period: 'Thu', reported: 11, resolved: 12, target: 11 },
-          { period: 'Fri', reported: 15, resolved: 14, target: 12 },
-          { period: 'Sat', reported: 8, resolved: 9, target: 8 },
-          { period: 'Today', reported: totalCount, resolved: resolvedCount, target: Math.max(8, Math.round(totalCount * 0.7)) },
-        ]
-      : [
-          { period: 'Week 1', reported: 42, resolved: 38, target: 40 },
-          { period: 'Week 2', reported: 58, resolved: 51, target: 45 },
-          { period: 'Week 3', reported: 64, resolved: 59, target: 50 },
-          { period: 'Week 4', reported: 51, resolved: 62, target: 50 },
-          { period: 'Week 5', reported: 47, resolved: 49, target: 45 },
-          { period: 'Current', reported: complaints.length, resolved: resolvedCount, target: 50 },
-        ];
+  // Real average resolution time from closed/resolved timestamps when stats absent
+  const computedAvgHours = (() => {
+    if (stats && typeof stats.avgResolutionHours === 'number' && stats.avgResolutionHours > 0) {
+      return stats.avgResolutionHours;
+    }
+    const resolvedDurations = complaints
+      .filter((c) => c.status === 'Resolved' || c.status === 'Closed')
+      .map((c) => {
+        const diffHrs = (new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime()) / 3600000;
+        return Number.isFinite(diffHrs) && diffHrs > 0 ? diffHrs : 0;
+      })
+      .filter((h) => h > 0);
+    if (resolvedDurations.length === 0) return 0;
+    return Number((resolvedDurations.reduce((a, b) => a + b, 0) / resolvedDurations.length).toFixed(1));
+  })();
+
+  // Real satisfaction rate from actual submitted citizen feedback
+  const feedbackItems = complaints.filter((c) => c.feedback && typeof c.feedback.rating === 'number');
+  const satisfactionPct =
+    stats && typeof stats.citizenSatisfactionRate === 'number' && (stats.citizenSatisfactionRate > 0 || feedbackItems.length === 0)
+      ? stats.citizenSatisfactionRate
+      : feedbackItems.length > 0
+      ? Math.round((feedbackItems.reduce((acc, c) => acc + c.feedback!.rating, 0) / feedbackItems.length) * 20)
+      : 0;
+
+  // 1. Real Complaints Over Time series grouped from complaint createdAt / updatedAt
+  const dayBuckets = timelineRange === '7d' ? 7 : timelineRange === '90d' ? 12 : 6;
+  const complaintsOverTime = (() => {
+    const byDate: Record<string, { reported: number; resolved: number; sortKey: number }> = {};
+    complaints.forEach((c) => {
+      const dt = new Date(c.createdAt);
+      if (Number.isNaN(dt.getTime())) return;
+      const label = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!byDate[label]) {
+        byDate[label] = { reported: 0, resolved: 0, sortKey: new Date(dt.toDateString()).getTime() };
+      }
+      byDate[label].reported += 1;
+      if (c.status === 'Resolved' || c.status === 'Closed') {
+        byDate[label].resolved += 1;
+      }
+    });
+    const sorted = Object.entries(byDate)
+      .sort((a, b) => a[1].sortKey - b[1].sortKey)
+      .slice(-dayBuckets)
+      .map(([period, val]) => ({
+        period,
+        reported: val.reported,
+        resolved: val.resolved,
+      }));
+    return sorted.length > 0 ? sorted : [{ period: 'No Data', reported: 0, resolved: 0 }];
+  })();
 
   // 2. Issue Distribution Donut Chart data
   const categoryMap: Record<string, number> = {};
@@ -127,42 +159,56 @@ export default function EnterpriseOverview({
     value: categoryMap[cat],
   }));
 
-  // 3. Department Performance Data (Horizontal Bar Chart)
-  const defaultDeptData = [
-    { name: 'Municipal Eng.', active: 18, resolved: 64 },
-    { name: 'Sanitation', active: 12, resolved: 82 },
-    { name: 'Water Supply', active: 9, resolved: 41 },
-    { name: 'Electrical Maint.', active: 6, resolved: 53 },
-  ];
-  const deptPerformanceData = departments.length > 0
-    ? departments.map((d) => ({
-        name: d.name.replace('Department of ', '').replace(' & Infrastructure', '').replace('Maintenance', 'Maint.').replace('Engineering', 'Eng.'),
-        active: d.activeTickets,
-        resolved: d.resolvedTickets,
-      }))
-    : defaultDeptData;
+  // 3. Department Performance Data computed strictly from live complaints
+  const deptPerformanceData = (() => {
+    const map: Record<string, { active: number; resolved: number }> = {};
+    departments.forEach((d) => {
+      map[d.name] = { active: 0, resolved: 0 };
+    });
+    complaints.forEach((c) => {
+      const dept = c.departmentAssigned || 'Unassigned';
+      if (!map[dept]) map[dept] = { active: 0, resolved: 0 };
+      if (c.status === 'Resolved' || c.status === 'Closed') {
+        map[dept].resolved += 1;
+      } else if (c.status !== 'Rejected') {
+        map[dept].active += 1;
+      }
+    });
+    return Object.entries(map)
+      .filter(([, counts]) => counts.active + counts.resolved > 0 || departments.length > 0)
+      .map(([fullName, counts]) => ({
+        name: fullName
+          .replace('Department of ', '')
+          .replace(' & Infrastructure', '')
+          .replace(' & Sanitation', '')
+          .replace(' & Streetlighting', '')
+          .replace(' & Stormwater', ''),
+        active: counts.active,
+        resolved: counts.resolved,
+      }));
+  })();
 
-  // 4. Resolution Efficiency Data (Composed Area Chart)
-  const efficiencyData = [
-    { day: 'Mon', efficiency: 91, avgHours: 24.2, slaRate: 95 },
-    { day: 'Tue', efficiency: 94, avgHours: 22.8, slaRate: 96 },
-    { day: 'Wed', efficiency: 89, avgHours: 25.1, slaRate: 94 },
-    { day: 'Thu', efficiency: 96, avgHours: 19.4, slaRate: 98 },
-    { day: 'Fri', efficiency: 93, avgHours: 21.6, slaRate: 95 },
-    { day: 'Sat', efficiency: 97, avgHours: 18.2, slaRate: 99 },
-    { day: 'Sun', efficiency: 95, avgHours: 20.1, slaRate: 96 },
-  ];
+  // 4. Resolution Rate Series computed from real daily buckets against 95% target
+  const efficiencyData = complaintsOverTime.map((item) => {
+    const rate = item.reported > 0 ? Math.round((item.resolved / item.reported) * 100) : 0;
+    return {
+      day: item.period,
+      efficiency: rate,
+      slaRate: 95,
+    };
+  });
 
   // Helper Sparkline mini-SVGs
   const renderSparkline = (points: number[], color: string) => {
-    const min = Math.min(...points);
-    const max = Math.max(...points);
+    const safePoints = points.length >= 2 ? points : [0, points[0] ?? 0];
+    const min = Math.min(...safePoints);
+    const max = Math.max(...safePoints);
     const range = max - min || 1;
     const width = 64;
     const height = 24;
-    const pathD = points
+    const pathD = safePoints
       .map((p, i) => {
-        const x = (i / (points.length - 1)) * width;
+        const x = (i / (safePoints.length - 1)) * width;
         const y = height - ((p - min) / range) * (height - 4) - 2;
         return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
       })
@@ -174,6 +220,9 @@ export default function EnterpriseOverview({
       </svg>
     );
   };
+
+  const dailyReportedSeries = complaintsOverTime.map((d) => d.reported);
+  const dailyResolvedSeries = complaintsOverTime.map((d) => d.resolved);
 
   const getPriorityBadge = (priority: PriorityLevel) => {
     switch (priority) {
@@ -214,20 +263,20 @@ export default function EnterpriseOverview({
     <div className="space-y-6 text-left">
       {/* Top Heading */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#E5E7EB] dark:border-[#374151]">
-        <div>
+        <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold text-[#111827] dark:text-[#F9FAFB] tracking-tight">
             {greetingPrefix}, {adminShortName}
           </h1>
           <p className="text-xs sm:text-sm text-[#667085] dark:text-[#9CA3AF] mt-1">
-            Here's what's happening across your city's civic infrastructure.
+            Live municipal database metrics across all civic sectors.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {onRefreshData && (
             <button
               onClick={onRefreshData}
-              className="p-2 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-[#344054] dark:text-[#D1D5DB] hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="min-h-[38px] px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-[#344054] dark:text-[#D1D5DB] hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
               title="Refresh live telemetry"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -237,7 +286,7 @@ export default function EnterpriseOverview({
 
           <button
             onClick={() => exportComplaintsToPDF(complaints, 'CivicPulse_Infrastructure_Audit_Report')}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-[#344054] dark:text-[#D1D5DB] hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="min-h-[38px] px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] text-[#344054] dark:text-[#D1D5DB] hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <Download className="w-3.5 h-3.5 text-[#667085] dark:text-[#9CA3AF]" />
             <span>Export Report</span>
@@ -245,7 +294,7 @@ export default function EnterpriseOverview({
 
           <button
             onClick={() => onNavigateTab('report')}
-            className="px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="min-h-[38px] px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
           >
             <span>+ Report Issue</span>
           </button>
@@ -254,9 +303,9 @@ export default function EnterpriseOverview({
 
       {/* Critical SLA Notification Banner if any */}
       {criticalSlaBreaches.length > 0 && (
-        <div className="p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/30 border border-[#FCA5A5] dark:border-red-900/60 text-[#991B1B] dark:text-red-300 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <ShieldAlert className="w-5 h-5 text-[#DC2626] dark:text-red-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/30 border border-[#FCA5A5] dark:border-red-900/60 text-[#991B1B] dark:text-red-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+            <ShieldAlert className="w-5 h-5 text-[#DC2626] dark:text-red-400 shrink-0 mt-0.5 sm:mt-0" />
             <div className="text-xs min-w-0">
               <span className="font-bold">CRITICAL ATTENTION REQUIRED: </span>
               <span>
@@ -266,15 +315,15 @@ export default function EnterpriseOverview({
           </div>
           <button
             onClick={() => onNavigateTab('complaints')}
-            className="px-3 py-1 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold shrink-0 transition-colors shadow-2xs"
+            className="w-full sm:w-auto min-h-[36px] px-3.5 py-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-semibold shrink-0 transition-colors shadow-2xs text-center"
           >
             View Urgent
           </button>
         </div>
       )}
 
-      {/* 6 KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+      {/* 6 KPI Cards Grid (100% Live DB Values) */}
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 tabular-nums">
         {/* 1. Total Complaints */}
         <div className="p-4 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#667085] dark:text-slate-400">
@@ -287,20 +336,19 @@ export default function EnterpriseOverview({
             <span className="text-2xl font-bold text-[#101828] dark:text-white">
               {totalCount}
             </span>
-            {renderSparkline([28, 34, 40, 48, 51, totalCount], '#2563EB')}
+            {renderSparkline(dailyReportedSeries, '#2563EB')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#16A34A] font-semibold">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> +12.4%
+            <span className="text-[#667085] dark:text-slate-400">
+              {criticalSlaBreaches.length} critical open
             </span>
-            <span className="text-[#667085] dark:text-slate-400">vs last period</span>
           </div>
         </div>
 
         {/* 2. Pending Complaints */}
         <div className="p-4 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-[#667085] dark:text-slate-400">
-            <span className="text-xs font-semibold">Pending</span>
+            <span className="text-xs font-semibold">Pending Triage</span>
             <div className="w-8 h-8 rounded-lg bg-[#FFFBEB] dark:bg-[#0F172A] text-[#D97706] flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
@@ -309,13 +357,11 @@ export default function EnterpriseOverview({
             <span className="text-2xl font-bold text-[#D97706]">
               {pendingCount}
             </span>
-            {renderSparkline([18, 15, 14, 16, 12, pendingCount], '#F59E0B')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#16A34A] font-semibold">
-              <TrendingDown className="w-3 h-3 mr-0.5" /> -4.2%
+            <span className="text-[#667085] dark:text-slate-400">
+              {totalCount > 0 ? `${Math.round((pendingCount / totalCount) * 100)}% of total` : 'No pending'}
             </span>
-            <span className="text-[#667085] dark:text-slate-400">vs last period</span>
           </div>
         </div>
 
@@ -331,13 +377,9 @@ export default function EnterpriseOverview({
             <span className="text-2xl font-bold text-[#0D9488]">
               {inProgressCount}
             </span>
-            {renderSparkline([6, 9, 12, 11, 14, inProgressCount], '#14B8A6')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#2563EB] font-semibold">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> +8.1%
-            </span>
-            <span className="text-[#667085] dark:text-slate-400">deployed crews</span>
+            <span className="text-[#667085] dark:text-slate-400">assigned & active</span>
           </div>
         </div>
 
@@ -353,13 +395,11 @@ export default function EnterpriseOverview({
             <span className="text-2xl font-bold text-[#16A34A]">
               {resolvedCount}
             </span>
-            {renderSparkline([12, 19, 24, 30, 38, resolvedCount], '#16A34A')}
+            {renderSparkline(dailyResolvedSeries, '#16A34A')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#16A34A] font-semibold">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> +19.5%
-            </span>
-            <span className="text-[#667085] dark:text-slate-400">completion velocity</span>
+            <span className="font-semibold text-[#16A34A]">{resolutionRatePct}%</span>
+            <span className="text-[#667085] dark:text-slate-400">resolution rate</span>
           </div>
         </div>
 
@@ -374,17 +414,15 @@ export default function EnterpriseOverview({
           <div className="mt-2 flex items-baseline justify-between">
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold text-[#101828] dark:text-white">
-                {stats?.avgResolutionHours || 21.4}
+                {computedAvgHours > 0 ? computedAvgHours : '0'}
               </span>
               <span className="text-xs font-medium text-[#667085]">hours</span>
             </div>
-            {renderSparkline([32, 28, 25, 23, 22, 21.4], '#8B5CF6')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#16A34A] font-semibold">
-              <TrendingDown className="w-3 h-3 mr-0.5" /> -2.6h
+            <span className="text-[#667085] dark:text-slate-400">
+              {resolvedCount > 0 ? `across ${resolvedCount} resolved` : 'no closed durations'}
             </span>
-            <span className="text-[#667085] dark:text-slate-400">faster than SLA</span>
           </div>
         </div>
 
@@ -398,40 +436,38 @@ export default function EnterpriseOverview({
           </div>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-bold text-[#059669]">
-              {stats?.citizenSatisfactionRate || 94.8}%
+              {feedbackItems.length > 0 ? `${satisfactionPct}%` : 'N/A'}
             </span>
-            {renderSparkline([88, 90, 92, 91, 93, 94.8], '#10B981')}
           </div>
           <div className="mt-2.5 pt-2 border-t border-[#F2F4F7] dark:border-[#2D3748] flex items-center gap-1.5 text-[11px]">
-            <span className="flex items-center text-[#16A34A] font-semibold">
-              <TrendingUp className="w-3 h-3 mr-0.5" /> +3.2%
+            <span className="text-[#667085] dark:text-slate-400">
+              {feedbackItems.length} verified review{feedbackItems.length === 1 ? '' : 's'}
             </span>
-            <span className="text-[#667085] dark:text-slate-400">verified reviews</span>
           </div>
         </div>
       </div>
 
       {/* Visualizations Grid: 4 Core Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* 1. Complaints Over Time – Line Chart (7 cols) */}
-        <div className="lg:col-span-7 p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
-            <div>
+        <div className="lg:col-span-7 min-w-0 p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#101828] dark:text-white">
-                Complaints Over Time
+                Complaints Over Time (Database Records)
               </h3>
               <p className="text-xs text-[#667085] dark:text-slate-400">
-                Weekly reported vs resolved issue velocity
+                Daily reported vs resolved complaints grouped by creation date
               </p>
             </div>
-            <div className="flex items-center gap-1 p-1 bg-[#F2F4F7] dark:bg-[#0F172A] rounded-lg text-[11px] font-medium">
+            <div className="flex items-center gap-1 p-1 bg-[#F2F4F7] dark:bg-[#0F172A] rounded-lg text-[11px] font-medium shrink-0">
               <button
                 onClick={() => setTimelineRange('30d')}
                 className={`px-2.5 py-1 rounded-md transition-colors ${
                   timelineRange === '30d' ? 'bg-white dark:bg-[#1E293B] text-[#101828] dark:text-white shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
-                30 Days
+                Recent
               </button>
               <button
                 onClick={() => setTimelineRange('7d')}
@@ -439,17 +475,17 @@ export default function EnterpriseOverview({
                   timelineRange === '7d' ? 'bg-white dark:bg-[#1E293B] text-[#101828] dark:text-white shadow-2xs font-semibold' : 'text-[#667085]'
                 }`}
               >
-                7 Days
+                7 Buckets
               </button>
             </div>
           </div>
 
-          <div className="h-64 w-full pt-4">
+          <div className="h-56 sm:h-64 w-full min-w-0 pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={complaintsOverTime} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="period" stroke={axisStroke} fontSize={11} tickLine={false} />
-                <YAxis stroke={axisStroke} fontSize={11} tickLine={false} />
+                <YAxis stroke={axisStroke} fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                 <Line
@@ -476,9 +512,9 @@ export default function EnterpriseOverview({
         </div>
 
         {/* 2. Issue Distribution – Donut Chart (5 cols) */}
-        <div className="lg:col-span-5 p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
-            <div>
+        <div className="lg:col-span-5 min-w-0 p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#101828] dark:text-white">
                 Issue Distribution
               </h3>
@@ -486,12 +522,12 @@ export default function EnterpriseOverview({
                 Categorical breakdown of municipal reports
               </p>
             </div>
-            <span className="text-[11px] font-mono font-semibold text-[#2563EB] bg-[#EFF6FF] dark:bg-[#0F172A] px-2 py-0.5 rounded">
+            <span className="text-[11px] font-mono font-semibold text-[#2563EB] bg-[#EFF6FF] dark:bg-[#0F172A] px-2 py-0.5 rounded shrink-0">
               {totalCount} Total
             </span>
           </div>
 
-          <div className="h-64 w-full flex items-center justify-center">
+          <div className="h-60 sm:h-64 w-full min-w-0 flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -529,34 +565,34 @@ export default function EnterpriseOverview({
         </div>
 
         {/* 3. Department Performance – Horizontal Bar Chart (6 cols) */}
-        <div className="lg:col-span-6 p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
-            <div>
+        <div className="lg:col-span-6 min-w-0 p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs flex flex-col justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#101828] dark:text-white">
-                Department Performance
+                Department Performance (Live Queue)
               </h3>
               <p className="text-xs text-[#667085] dark:text-slate-400">
-                Active workload vs completed resolutions
+                Active workload vs completed resolutions from database
               </p>
             </div>
             <button
               onClick={() => onNavigateTab('departments')}
-              className="text-xs font-semibold text-[#2563EB] hover:underline"
+              className="text-xs font-semibold text-[#2563EB] hover:underline shrink-0"
             >
               Manage &rarr;
             </button>
           </div>
 
-          <div className="h-64 w-full pt-4">
+          <div className="h-60 sm:h-64 w-full min-w-0 pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 layout="vertical"
                 data={deptPerformanceData}
-                margin={{ top: 5, right: 20, left: 25, bottom: 0 }}
+                margin={{ top: 5, right: 14, left: 4, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={gridStroke} />
-                <XAxis type="number" stroke={axisStroke} fontSize={11} tickLine={false} />
-                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={11} tickLine={false} width={95} />
+                <XAxis type="number" stroke={axisStroke} fontSize={11} tickLine={false} allowDecimals={false} />
+                <YAxis dataKey="name" type="category" stroke={axisStroke} fontSize={11} tickLine={false} width={96} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
                 <Bar dataKey="active" fill="#F59E0B" name="Active Tickets" radius={[0, 4, 4, 0]} barSize={12} />
@@ -566,23 +602,23 @@ export default function EnterpriseOverview({
           </div>
         </div>
 
-        {/* 4. Resolution Efficiency – Analytics Chart (6 cols) */}
-        <div className="lg:col-span-6 p-5 rounded-xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB] dark:border-[#374151]">
-            <div>
+        {/* 4. Resolution Rate – Analytics Chart (6 cols) */}
+        <div className="lg:col-span-6 min-w-0 p-4 sm:p-5 rounded-xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs flex flex-col justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E5E7EB] dark:border-[#374151]">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#111827] dark:text-[#F9FAFB]">
-                Resolution Efficiency
+                Cohort Resolution Rate
               </h3>
               <p className="text-xs text-[#667085] dark:text-[#9CA3AF]">
-                Daily turnaround efficiency against 95% SLA target
+                Resolved share per intake date against 95% benchmark
               </p>
             </div>
-            <span className="text-[11px] font-semibold text-[#16A34A] dark:text-emerald-400 bg-[#ECFDF5] dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-[#A7F3D0] dark:border-emerald-900/60">
-              Optimal SLA
+            <span className="text-[11px] font-semibold text-[#16A34A] dark:text-emerald-400 bg-[#ECFDF5] dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-[#A7F3D0] dark:border-emerald-900/60 shrink-0">
+              Overall: {resolutionRatePct}%
             </span>
           </div>
 
-          <div className="h-64 w-full pt-4">
+          <div className="h-56 sm:h-64 w-full min-w-0 pt-4">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={efficiencyData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -593,10 +629,10 @@ export default function EnterpriseOverview({
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
                 <XAxis dataKey="day" stroke={axisStroke} fontSize={11} tickLine={false} />
-                <YAxis stroke={axisStroke} fontSize={11} tickLine={false} domain={[80, 100]} />
+                <YAxis stroke={axisStroke} fontSize={11} tickLine={false} domain={[0, 100]} />
                 <Tooltip
                   contentStyle={tooltipStyle}
-                  formatter={(val: any) => [`${val}%`, 'Efficiency Rate']}
+                  formatter={(val: any) => [`${val}%`, 'Resolution Rate']}
                 />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', paddingTop: '6px' }} />
                 <Area
@@ -606,7 +642,7 @@ export default function EnterpriseOverview({
                   strokeWidth={2.5}
                   fillOpacity={1}
                   fill="url(#efficiencyGrad)"
-                  name="Efficiency Score (%)"
+                  name="Resolved Share (%)"
                 />
                 <Line
                   type="monotone"
@@ -623,8 +659,8 @@ export default function EnterpriseOverview({
         </div>
       </div>
 
-      {/* Recent Complaints Table */}
-      <div className="p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+      {/* Recent Complaints Card List (Mobile) + Table (Desktop) */}
+      <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-sm font-bold text-[#101828] dark:text-white">
@@ -637,15 +673,48 @@ export default function EnterpriseOverview({
 
           <button
             onClick={() => onNavigateTab('complaints')}
-            className="text-xs font-semibold text-[#2563EB] hover:underline flex items-center gap-1 self-start sm:self-auto"
+            className="text-xs font-semibold text-[#2563EB] hover:underline flex items-center gap-1 self-start sm:self-auto py-1"
           >
             <span>View All ({complaints.length})</span>
             <ArrowUpRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
+        {/* Mobile Cards */}
+        <div className="md:hidden divide-y divide-[#EAECF0] dark:divide-[#334155] rounded-lg border border-[#EAECF0] dark:border-[#334155] overflow-hidden">
+          {complaints.slice(0, 6).map((c) => (
+            <div key={c.id} className="p-3.5 bg-white dark:bg-[#1E293B] space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono font-bold text-[#2563EB]">{c.ticketNumber}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${getPriorityBadge(c.priority)}`}>
+                    {c.priority}
+                  </span>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${getStatusBadge(c.status)}`}>
+                    {c.status}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <div className="font-semibold text-[#101828] dark:text-white line-clamp-1">{c.title}</div>
+                <div className="text-[11px] text-[#667085]">{c.category} • {c.location.ward}</div>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-[#667085]">
+                <span className="truncate">{c.departmentAssigned || 'Roads & Infrastructure'}</span>
+                <button
+                  onClick={() => onSelectComplaint(c)}
+                  className="min-h-[34px] px-3 py-1.5 rounded-lg bg-[#F2F4F7] hover:bg-[#EAECF0] dark:bg-[#334155] text-[#344054] dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1 shrink-0"
+                >
+                  <Eye className="w-3.5 h-3.5" />
+                  <span>Inspect</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Table Container */}
-        <div className="overflow-x-auto rounded-lg border border-[#EAECF0] dark:border-[#334155]">
+        <div className="hidden md:block overflow-x-auto rounded-lg border border-[#EAECF0] dark:border-[#334155]">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F9FAFB] dark:bg-[#182234] text-[#667085] font-semibold border-b border-[#EAECF0] dark:border-[#334155] text-[11px] uppercase tracking-wider">
               <tr>

@@ -34,7 +34,7 @@ export default function TopCategories({ onSelectCategory }: TopCategoriesProps) 
 
   return (
     <section className="py-12 sm:py-16 bg-[#F5F7FA] dark:bg-[#0B1120] border-b border-[#E5E7EB] dark:border-[#374151] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -42,7 +42,7 @@ export default function TopCategories({ onSelectCategory }: TopCategoriesProps) 
             <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
               Municipal Services Directory
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="fluid-section-title font-bold text-slate-900 dark:text-white">
               {t('landing.topCategories')}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
@@ -52,7 +52,7 @@ export default function TopCategories({ onSelectCategory }: TopCategoriesProps) 
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[440px]:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
           {CATEGORIES_DATA.map((cat) => {
             const Icon = cat.icon;
             const title = translateCategory(cat.name);
@@ -62,7 +62,7 @@ export default function TopCategories({ onSelectCategory }: TopCategoriesProps) 
               <button
                 key={cat.name}
                 onClick={() => onSelectCategory(cat.name)}
-                className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] hover:border-blue-400 dark:hover:border-blue-600 transition-colors text-left flex flex-col justify-between group shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] hover:border-blue-400 dark:hover:border-blue-600 transition-colors text-left flex flex-col justify-between group shadow-xs cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 min-w-0"
               >
                 <div>
                   <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700/80 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-3 group-hover:bg-blue-50 dark:group-hover:bg-blue-950 group-hover:text-blue-700 dark:group-hover:text-blue-400 transition-colors">

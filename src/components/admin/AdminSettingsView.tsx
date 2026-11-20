@@ -244,7 +244,7 @@ export default function AdminSettingsView({
           <button
             type="button"
             onClick={handleExportDatabase}
-            className="px-3.5 py-2 rounded-lg bg-white dark:bg-[#0F172A] border border-[#D0D5DD] dark:border-[#334155] text-[#344054] dark:text-slate-200 text-xs font-semibold hover:bg-[#F9FAFB] transition-colors flex items-center gap-1.5 shadow-2xs shrink-0"
+            className="w-full sm:w-auto px-3.5 py-2.5 min-h-[40px] rounded-lg bg-white dark:bg-[#0F172A] border border-[#D0D5DD] dark:border-[#334155] text-[#344054] dark:text-slate-200 text-xs font-semibold hover:bg-[#F9FAFB] transition-colors flex items-center justify-center gap-1.5 shadow-2xs shrink-0"
           >
             <Download className="w-3.5 h-3.5 text-[#667085]" />
             <span>Download JSON Snapshot</span>
@@ -252,7 +252,7 @@ export default function AdminSettingsView({
         </div>
 
         {/* Save Changes Button */}
-        <div className="flex items-center justify-end gap-3 pt-2">
+        <div className="flex flex-wrap items-center justify-end gap-3 pt-2">
           {saveError && (
             <span className="text-xs font-semibold text-[#DC2626] dark:text-red-400">
               {saveError}
@@ -268,7 +268,7 @@ export default function AdminSettingsView({
           <button
             type="submit"
             disabled={saving}
-            className="px-5 py-2.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-xs flex items-center gap-1.5"
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-semibold transition-colors shadow-xs flex items-center justify-center gap-1.5"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{saving ? 'Saving...' : 'Save Configuration'}</span>

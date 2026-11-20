@@ -305,42 +305,44 @@ export default function SuperAdminDashboard({
   ];
 
   return (
-    <div className="min-h-screen bg-[#F5F7FA] dark:bg-[#0B1120] text-[#111827] dark:text-[#F9FAFB] flex flex-col font-sans selection:bg-purple-500 selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F5F7FA] dark:bg-[#0B1120] text-[#111827] dark:text-[#F9FAFB] flex flex-col font-sans selection:bg-purple-500 selection:text-white transition-colors duration-200 overflow-x-clip">
       {/* Top Command Bar */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#080E1A]/95 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#374151] px-4 sm:px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <header className="sticky top-0 z-40 h-14 sm:h-16 bg-white/95 dark:bg-[#080E1A]/95 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#374151] px-3 sm:px-6 flex items-center justify-between gap-2 pt-safe">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="lg:hidden p-2 rounded-xl text-[#667085] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1F2937]"
+            aria-label={isSidebarOpen ? 'Close navigation drawer' : 'Open navigation drawer'}
+            className="lg:hidden min-w-[44px] min-h-[44px] p-2 rounded-xl text-[#667085] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white hover:bg-[#F3F4F6] dark:hover:bg-[#1F2937] flex items-center justify-center shrink-0"
           >
             {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <div
+          <button
+            type="button"
             onClick={onNavigateToLanding}
-            className="flex items-center gap-2.5 cursor-pointer group"
+            className="flex items-center gap-2.5 cursor-pointer group min-w-0 text-left"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-purple-500/30 group-hover:scale-105 transition-transform shrink-0">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="font-black text-sm tracking-tight text-[#111827] dark:text-white">CivicPulse</span>
-                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                <span className="font-black text-sm tracking-tight text-[#111827] dark:text-white whitespace-nowrap">CivicPulse</span>
+                <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-purple-500/15 text-purple-700 dark:text-purple-300 border border-purple-500/30 whitespace-nowrap">
                   SUPER ADMIN
                 </span>
               </div>
-              <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF] block font-medium">
+              <span className="text-[10px] text-[#667085] dark:text-[#9CA3AF] hidden sm:block font-medium truncate">
                 Central Smart City Control Room
               </span>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Header Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           {/* Quick Role Switcher */}
-          <div className="hidden sm:flex items-center bg-[#F3F4F6] dark:bg-[#111827] rounded-xl p-1 border border-[#E5E7EB] dark:border-[#374151] text-xs">
+          <div className="hidden md:flex items-center bg-[#F3F4F6] dark:bg-[#111827] rounded-xl p-1 border border-[#E5E7EB] dark:border-[#374151] text-xs whitespace-nowrap">
             <button
               onClick={() => onSwitchRole('citizen')}
               className="px-2.5 py-1 rounded-lg text-[#667085] dark:text-slate-400 hover:text-[#111827] dark:hover:text-white transition-colors"
@@ -366,25 +368,26 @@ export default function SuperAdminDashboard({
             type="button"
             aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            className="w-9 h-9 rounded-xl border border-[#E5E7EB] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#111827] text-[#374151] dark:text-[#F9FAFB] hover:bg-[#F3F4F6] dark:hover:bg-[#1F2937] flex items-center justify-center transition-colors"
+            className="min-w-[40px] min-h-[40px] sm:w-9 sm:h-9 rounded-xl border border-[#E5E7EB] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#111827] text-[#374151] dark:text-[#F9FAFB] hover:bg-[#F3F4F6] dark:hover:bg-[#1F2937] flex items-center justify-center transition-colors"
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-slate-700" />}
           </button>
 
           {/* Admin Profile */}
           <div className="flex items-center gap-2 pl-2 border-l border-[#E5E7EB] dark:border-[#374151]">
-            <div className="w-8 h-8 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-xs">
+            <div className="w-8 h-8 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-xs shadow-xs shrink-0">
               SA
             </div>
-            <div className="hidden md:block text-left text-xs">
-              <div className="font-bold text-[#111827] dark:text-white leading-tight">{currentUser.name}</div>
+            <div className="hidden xl:block text-left text-xs">
+              <div className="font-bold text-[#111827] dark:text-white leading-tight truncate max-w-[160px]">{currentUser.name}</div>
               <div className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">Chief Technology Officer</div>
             </div>
 
             <button
               onClick={onLogout}
-              className="p-2 rounded-xl text-[#667085] dark:text-slate-400 hover:text-red-500 hover:bg-[#FEE2E2] dark:hover:bg-[#1F2937] transition-colors ml-1"
+              className="min-w-[40px] min-h-[40px] p-2 rounded-xl text-[#667085] dark:text-slate-400 hover:text-red-500 hover:bg-[#FEE2E2] dark:hover:bg-[#1F2937] transition-colors flex items-center justify-center"
               title="Sign Out"
+              aria-label="Sign Out"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -393,14 +396,61 @@ export default function SuperAdminDashboard({
       </header>
 
       {/* Main Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-w-0 relative">
+        {/* Mobile/Tablet Sidebar Backdrop */}
+        {isSidebarOpen && (
+          <div
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 z-30 bg-black/60 backdrop-blur-xs lg:hidden"
+          />
+        )}
+
         {/* Sidebar */}
         <aside
-          className={`fixed lg:static inset-y-0 left-0 z-30 w-64 bg-[#111827] dark:bg-[#080E1A] border-r border-[#1F2937] dark:border-[#1E293B] flex flex-col justify-between transition-transform duration-300 transform ${
+          aria-label="Super Admin Modules"
+          className={`fixed lg:sticky top-0 lg:top-16 inset-y-0 lg:h-[calc(100dvh-4rem)] left-0 z-40 lg:z-20 w-72 max-w-[85vw] lg:w-64 shrink-0 bg-[#111827] dark:bg-[#080E1A] border-r border-[#1F2937] dark:border-[#1E293B] flex flex-col justify-between transition-transform duration-200 transform ${
             isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
           }`}
         >
-          <div className="p-4 space-y-1 overflow-y-auto max-h-[calc(100vh-120px)] custom-scrollbar">
+          <div className="flex items-center justify-between px-4 h-14 border-b border-[#1F2937] lg:hidden shrink-0">
+            <span className="font-bold text-sm text-white">Control Room Menu</span>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              aria-label="Close sidebar"
+              className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="p-3 sm:p-4 space-y-1 overflow-y-auto flex-1 custom-scrollbar">
+            {/* Mobile Role Switcher inside Drawer (< md) */}
+            <div className="md:hidden pb-3 mb-3 border-b border-[#1F2937] space-y-1.5">
+              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-2">
+                Switch Workspace
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-[11px]">
+                <button
+                  onClick={() => { onSwitchRole('citizen'); setIsSidebarOpen(false); }}
+                  className="min-h-[36px] px-2 py-1.5 rounded-lg bg-[#1F2937] text-slate-300 font-semibold"
+                >
+                  Citizen
+                </button>
+                <button
+                  onClick={() => { onSwitchRole('government'); setIsSidebarOpen(false); }}
+                  className="min-h-[36px] px-2 py-1.5 rounded-lg bg-[#1F2937] text-slate-300 font-semibold"
+                >
+                  Gov Ops
+                </button>
+                <button
+                  onClick={() => setIsSidebarOpen(false)}
+                  className="min-h-[36px] px-2 py-1.5 rounded-lg bg-purple-600 text-white font-bold"
+                >
+                  Super
+                </button>
+              </div>
+            </div>
+
             <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider px-3 mb-2">
               System Modules
             </div>
@@ -415,19 +465,19 @@ export default function SuperAdminDashboard({
                     setActiveTab(item.id);
                     setIsSidebarOpen(false);
                   }}
-                  className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                  className={`w-full min-h-[42px] flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
                       ? 'bg-purple-600 text-white shadow-lg shadow-purple-600/30'
                       : 'text-slate-400 hover:text-slate-200 hover:bg-[#1F2937]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span className="truncate">{item.label}</span>
                   </div>
                   {item.badge !== undefined && (
                     <span
-                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 font-mono ${
                         isActive
                           ? 'bg-white/20 text-white'
                           : 'bg-[#1F2937] text-slate-300'
@@ -441,7 +491,7 @@ export default function SuperAdminDashboard({
             })}
           </div>
 
-          <div className="p-4 border-t border-[#1F2937] text-[11px] text-slate-400 space-y-1">
+          <div className="p-4 border-t border-[#1F2937] text-[11px] text-slate-400 space-y-1 shrink-0 pb-safe">
             <div className="flex items-center justify-between font-medium">
               <span>CivicPulse Version</span>
               <span className="font-mono text-purple-400 font-bold">v4.5.0-enterprise</span>
@@ -454,7 +504,8 @@ export default function SuperAdminDashboard({
         </aside>
 
         {/* Main Content Viewport */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-[#F5F7FA] dark:bg-[#0B1120]">
+        <main className="flex-1 min-w-0 overflow-y-auto p-3 sm:p-6 lg:p-8 2xl:px-10 bg-[#F5F7FA] dark:bg-[#0B1120]">
+          <div className="max-w-[1600px] mx-auto w-full">
           {bannerNotice && (
             <div
               className={`mb-4 p-3.5 rounded-xl border text-xs font-semibold flex items-center justify-between gap-3 ${
@@ -601,6 +652,7 @@ export default function SuperAdminDashboard({
               )}
             </>
           )}
+          </div>
         </main>
       </div>
     </div>

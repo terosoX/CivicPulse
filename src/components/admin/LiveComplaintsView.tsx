@@ -22,21 +22,25 @@ import {
   Check,
   ExternalLink
 } from 'lucide-react';
-import { Complaint, ComplaintStatus, PriorityLevel, IssueCategory } from '../../types';
+import { Complaint, ComplaintStatus, PriorityLevel, User } from '../../types';
 import { formatDate } from '../../utils/i18n';
 import { exportComplaintsToPDF } from '../../utils/pdfExport';
 import { api } from '../../services/api';
 
 interface LiveComplaintsViewProps {
   complaints: Complaint[];
+  user?: User | null;
   onSelectComplaint?: (c: Complaint) => void;
+  onOpenProgressModal?: (c: Complaint) => void;
   onRefreshData?: () => void;
   onStatusUpdate?: (id: string, status: ComplaintStatus) => void;
 }
 
 export default function LiveComplaintsView({
   complaints,
+  user,
   onSelectComplaint,
+  onOpenProgressModal,
   onRefreshData,
   onStatusUpdate,
 }: LiveComplaintsViewProps) {
@@ -58,6 +62,10 @@ export default function LiveComplaintsView({
   const [savingRemark, setSavingRemark] = useState(false);
   const [saveRemarkSuccess, setSaveRemarkSuccess] = useState(false);
   const [remarkError, setRemarkError] = useState<string | null>(null);
+  const [assignDept, setAssignDept] = useState('');
+  const [assignOfficer, setAssignOfficer] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignSuccess, setAssignSuccess] = useState(false);
 
   // Filter categories (all 10 civic categories)
   const categories = [
@@ -176,10 +184,34 @@ export default function LiveComplaintsView({
 
   const handleOpenDetail = (c: Complaint) => {
     setDetailedComplaint(c);
+    setAssignDept(c.departmentAssigned || 'Roads & Infrastructure');
+    setAssignOfficer(c.officerAssigned || 'Eng. Vikram Sethi');
+    setAssignSuccess(false);
     setAdminRemarkText('');
     setSaveRemarkSuccess(false);
     setRemarkError(null);
-    if (onSelectComplaint) onSelectComplaint(c);
+  };
+
+  const handleAssignOfficial = async () => {
+    if (!detailedComplaint || !assignDept) return;
+    setAssigning(true);
+    setRemarkError(null);
+    setAssignSuccess(false);
+    try {
+      const updated = await api.assignComplaint(
+        detailedComplaint.id,
+        assignDept,
+        assignOfficer.trim() || undefined
+      );
+      setDetailedComplaint(updated);
+      setAssignSuccess(true);
+      if (onRefreshData) onRefreshData();
+      setTimeout(() => setAssignSuccess(false), 2500);
+    } catch (e: any) {
+      setRemarkError(e?.message || 'Failed to assign department & officer');
+    } finally {
+      setAssigning(false);
+    }
   };
 
   const handleSaveAdminRemark = async () => {
@@ -188,8 +220,8 @@ export default function LiveComplaintsView({
     setRemarkError(null);
     try {
       const updated = await api.updateComplaintStatus(detailedComplaint.id, {
-        notes: `Admin Note: ${adminRemarkText.trim()}`,
-        updatedBy: 'Administrator',
+        notes: `Official Note: ${adminRemarkText.trim()}`,
+        updatedBy: user ? `${user.name} (${user.role})` : 'Municipal Administrator',
       });
       setDetailedComplaint(updated);
       setSaveRemarkSuccess(true);
@@ -251,10 +283,10 @@ export default function LiveComplaintsView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => exportComplaintsToPDF(filteredComplaints, 'Live_Complaint_Registry')}
-            className="px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="w-full sm:w-auto min-h-[40px] px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
           >
             <Download className="w-3.5 h-3.5 text-[#667085]" />
             <span>Export Table PDF</span>
@@ -299,7 +331,7 @@ export default function LiveComplaintsView({
         </div>
 
         {/* Multi-Filter Select Row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
+        <div className="grid grid-cols-1 min-[380px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 pt-1">
           {/* Category Filter */}
           <div>
             <label className="block text-[10px] font-semibold text-[#667085] uppercase tracking-wider mb-1">
@@ -402,9 +434,81 @@ export default function LiveComplaintsView({
         </div>
       </div>
 
-      {/* Main Complaints Table Container */}
+      {/* Main Complaints Mobile Cards + Desktop Table Container */}
       <div className="rounded-xl bg-white dark:bg-[#111827] border border-[#EAECF0] dark:border-[#374151] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-[#EAECF0] dark:divide-[#334155]">
+          {paginatedComplaints.length === 0 ? (
+            <div className="p-8 text-center text-[#667085] space-y-2">
+              <div className="w-10 h-10 rounded-full bg-[#F2F4F7] dark:bg-[#1F2937] flex items-center justify-center mx-auto">
+                <Search className="w-5 h-5" />
+              </div>
+              <div className="font-semibold text-sm text-[#101828] dark:text-white">No grievances found</div>
+              <p className="text-xs">Try clearing or modifying your filter criteria to expand results.</p>
+            </div>
+          ) : (
+            paginatedComplaints.map((c) => (
+              <div
+                key={c.id}
+                onClick={() => handleOpenDetail(c)}
+                className="p-4 space-y-2.5 text-xs hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937] transition-colors cursor-pointer"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono font-bold text-[#2563EB]">{c.ticketNumber}</span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${getPriorityBadge(c.priority)}`}>
+                      {c.priority}
+                    </span>
+                    <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${getStatusBadge(c.status)}`}>
+                      {c.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2.5">
+                  <img
+                    src={c.images[0] || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=200'}
+                    alt={c.title}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    className="w-10 h-10 rounded-md object-cover shrink-0 border border-[#EAECF0] dark:border-[#374151]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-[#101828] dark:text-white line-clamp-1">{c.title}</div>
+                    <div className="text-[11px] text-[#667085] truncate">{c.category}</div>
+                  </div>
+                </div>
+
+                <div className="text-[11px] text-[#475467] dark:text-slate-300 space-y-0.5">
+                  <div className="truncate">{c.citizenName} • {c.location.address}</div>
+                  <div className="text-[#667085] truncate">{c.departmentAssigned || 'Roads & Infrastructure'} • {formatDate(c.createdAt)}</div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                  {onOpenProgressModal && (
+                    <button
+                      onClick={() => onOpenProgressModal(c)}
+                      className="min-h-[36px] px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold inline-flex items-center gap-1.5"
+                    >
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>Update Stage</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleOpenDetail(c)}
+                    className="min-h-[36px] px-3 py-1.5 rounded-lg bg-[#F2F4F7] hover:bg-[#EAECF0] dark:bg-[#334155] text-[#344054] dark:text-slate-200 text-xs font-semibold inline-flex items-center gap-1.5"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Manage</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F9FAFB] dark:bg-[#1F2937] text-[#667085] font-semibold border-b border-[#EAECF0] dark:border-[#374151] text-[11px] uppercase tracking-wider">
               <tr>
@@ -504,13 +608,24 @@ export default function LiveComplaintsView({
 
                     {/* Action Button */}
                     <td className="px-4 py-3.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={() => handleOpenDetail(c)}
-                        className="px-2.5 py-1.2 rounded-lg bg-[#F2F4F7] hover:bg-[#EAECF0] dark:bg-[#334155] dark:hover:bg-[#475467] text-[#344054] dark:text-slate-200 text-xs font-semibold transition-colors inline-flex items-center gap-1"
-                      >
-                        <Eye className="w-3.5 h-3.5 text-[#667085]" />
-                        <span>View</span>
-                      </button>
+                      <div className="inline-flex items-center gap-1.5">
+                        {onOpenProgressModal && (
+                          <button
+                            onClick={() => onOpenProgressModal(c)}
+                            className="px-2.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors inline-flex items-center gap-1"
+                          >
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Update</span>
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleOpenDetail(c)}
+                          className="px-2.5 py-1.5 rounded-lg bg-[#F2F4F7] hover:bg-[#EAECF0] dark:bg-[#334155] dark:hover:bg-[#475467] text-[#344054] dark:text-slate-200 text-xs font-semibold transition-colors inline-flex items-center gap-1"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-[#667085]" />
+                          <span>Manage</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -558,13 +673,13 @@ export default function LiveComplaintsView({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
         >
-          <div className="bg-white dark:bg-[#111827] w-full max-w-3xl rounded-xl border border-[#EAECF0] dark:border-[#374151] shadow-2xl overflow-hidden my-auto flex flex-col max-h-[92vh]">
+          <div className="bg-white dark:bg-[#111827] w-full max-w-3xl rounded-t-2xl sm:rounded-xl border border-[#EAECF0] dark:border-[#374151] shadow-2xl overflow-hidden sm:my-auto flex flex-col max-h-[92dvh]">
             {/* Header */}
-            <div className="p-4 sm:p-5 border-b border-[#EAECF0] dark:border-[#374151] flex items-center justify-between bg-[#F9FAFB] dark:bg-[#1F2937]">
-              <div>
-                <div className="flex items-center gap-2">
+            <div className="p-4 sm:p-5 border-b border-[#EAECF0] dark:border-[#374151] flex items-start justify-between gap-3 bg-[#F9FAFB] dark:bg-[#1F2937]">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-xs font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded border border-[#BFDBFE]">
                     {detailedComplaint.ticketNumber}
                   </span>
@@ -575,21 +690,22 @@ export default function LiveComplaintsView({
                     {detailedComplaint.priority} Priority
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-[#101828] dark:text-white mt-1.5">
+                <h3 className="text-sm sm:text-base font-bold text-[#101828] dark:text-white mt-1.5 break-words">
                   {detailedComplaint.title}
                 </h3>
               </div>
 
               <button
                 onClick={() => setDetailedComplaint(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#667085] hover:text-[#101828] hover:bg-[#EAECF0] dark:hover:bg-[#334155] transition-colors"
+                aria-label="Close complaint details"
+                className="w-10 h-10 shrink-0 rounded-xl flex items-center justify-center text-[#667085] hover:text-[#101828] hover:bg-[#EAECF0] dark:hover:bg-[#334155] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable Body Content */}
-            <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-5 overflow-y-auto">
               {/* Citizen Description */}
               <div>
                 <label className="text-[11px] font-bold text-[#667085] uppercase tracking-wider block mb-1">
@@ -638,23 +754,23 @@ export default function LiveComplaintsView({
                 </div>
               </div>
 
-              {/* AI Classification Result & Confidence */}
+              {/* AI Classification Result */}
               <div className="p-4 rounded-xl bg-[#EFF6FF] dark:bg-[#0F1E36] border border-[#BFDBFE] dark:border-[#1E3A8A]">
-                <div className="flex items-center justify-between pb-2 border-b border-[#DBEAFE] dark:border-[#1E3A8A]">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#DBEAFE] dark:border-[#1E3A8A]">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#2563EB]" />
                     <span className="text-xs font-bold text-[#1E40AF] dark:text-[#93C5FD]">
-                      AI Classification Result
+                      Rule-Based Bilingual Triage Summary
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded border border-[#86EFAC]">
-                    Confidence: {detailedComplaint.aiAnalysis?.priorityConfidence || 94.2}%
+                  <span className="text-[11px] font-bold text-[#1E40AF] dark:text-[#93C5FD] bg-white dark:bg-[#111827] px-2 py-0.5 rounded border border-[#BFDBFE] dark:border-[#1E3A8A]">
+                    {detailedComplaint.aiAnalysis?.trainedModelLoaded ? 'Hybrid ML + Rules' : 'Deterministic Ontology'}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3 text-xs">
                   <div>
-                    <span className="text-[11px] text-[#667085] dark:text-slate-400 block">Predicted Category</span>
+                    <span className="text-[11px] text-[#667085] dark:text-slate-400 block">Detected Category</span>
                     <span className="font-semibold text-[#101828] dark:text-white">
                       {detailedComplaint.aiAnalysis?.detectedCategory || detailedComplaint.category}
                     </span>
@@ -668,11 +784,57 @@ export default function LiveComplaintsView({
                   </div>
 
                   <div>
-                    <span className="text-[11px] text-[#667085] dark:text-slate-400 block">Suggested Department</span>
+                    <span className="text-[11px] text-[#667085] dark:text-slate-400 block">Recommended Department</span>
                     <span className="font-semibold text-[#101828] dark:text-white">
                       {detailedComplaint.aiAnalysis?.recommendedDepartment || detailedComplaint.departmentAssigned || 'Roads & Infrastructure'}
                     </span>
                   </div>
+                </div>
+              </div>
+
+              {/* Department & Officer Assignment Controls */}
+              <div className="p-4 rounded-xl bg-[#F9FAFB] dark:bg-[#1F2937] border border-[#EAECF0] dark:border-[#374151] space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-[#2563EB]" />
+                    <span className="text-xs font-bold text-[#101828] dark:text-white">
+                      Department Dispatch & Officer Assignment
+                    </span>
+                  </div>
+                  {assignSuccess && (
+                    <span className="text-[11px] font-semibold text-[#16A34A] flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Dispatched
+                    </span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <select
+                    value={assignDept}
+                    onChange={(e) => setAssignDept(e.target.value)}
+                    className="px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs font-medium text-[#101828] dark:text-white"
+                  >
+                    {departments.filter((d) => d !== 'All').map((d) => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="text"
+                    value={assignOfficer}
+                    onChange={(e) => setAssignOfficer(e.target.value)}
+                    placeholder="Officer / Field Worker Name"
+                    className="px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs text-[#101828] dark:text-white"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={handleAssignOfficial}
+                    disabled={assigning}
+                    className="min-h-[38px] px-3 py-2 rounded-lg bg-[#111827] dark:bg-[#2563EB] hover:opacity-90 text-white text-xs font-semibold disabled:opacity-50 transition-opacity"
+                  >
+                    {assigning ? 'Assigning...' : 'Assign Department & Crew'}
+                  </button>
                 </div>
               </div>
 
@@ -728,18 +890,18 @@ export default function LiveComplaintsView({
                     {remarkError}
                   </div>
                 )}
-                <div className="flex gap-2">
+                <div className="flex flex-col min-[420px]:flex-row gap-2">
                   <input
                     type="text"
                     value={adminRemarkText}
                     onChange={(e) => setAdminRemarkText(e.target.value)}
                     placeholder="Enter official observation, directive to field crew, or resolution note..."
-                    className="flex-1 px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
+                    className="flex-1 min-w-0 px-3 py-2.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
                   />
                   <button
                     onClick={handleSaveAdminRemark}
                     disabled={savingRemark || !adminRemarkText.trim()}
-                    className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-50 transition-colors shrink-0 flex items-center gap-1.5"
+                    className="min-h-[40px] px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-50 transition-colors shrink-0 flex items-center justify-center gap-1.5"
                   >
                     {savingRemark ? (
                       <span>Saving...</span>
@@ -760,10 +922,38 @@ export default function LiveComplaintsView({
             </div>
 
             {/* Footer */}
-            <div className="p-3.5 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#EAECF0] dark:border-[#374151] flex items-center justify-end gap-2">
+            <div className="p-3.5 pb-safe bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#EAECF0] dark:border-[#374151] flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {onOpenProgressModal && (
+                  <button
+                    onClick={() => {
+                      const target = detailedComplaint;
+                      setDetailedComplaint(null);
+                      onOpenProgressModal(target);
+                    }}
+                    className="min-h-[40px] px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold flex items-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Update Status / Upload After-Photo</span>
+                  </button>
+                )}
+                {onSelectComplaint && (
+                  <button
+                    onClick={() => {
+                      const target = detailedComplaint;
+                      setDetailedComplaint(null);
+                      onSelectComplaint(target);
+                    }}
+                    className="min-h-[40px] px-3 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-xs font-semibold text-[#344054] dark:text-slate-200 hover:bg-[#F2F4F7] flex items-center gap-1.5"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Full Timeline</span>
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => setDetailedComplaint(null)}
-                className="px-4 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F2F4F7]"
+                className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-lg bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F2F4F7]"
               >
                 Close View
               </button>

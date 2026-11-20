@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { X, Camera, Clock } from 'lucide-react';
-import { Complaint, ComplaintStatus } from '../../types';
+import { Complaint, ComplaintStatus, User } from '../../types';
 import { api } from '../../services/api';
 import { translateStatus } from '../../utils/i18n';
 
 interface ProgressManagementModalProps {
   complaint: Complaint;
+  user?: User | null;
   onClose: () => void;
   onUpdateSuccess: (updated: Complaint) => void;
 }
 
 const VALID_TRANSITIONS_MAP: Record<string, ComplaintStatus[]> = {
-  'Submitted': ['Verified', 'Rejected', 'Assigned'],
-  'Pending': ['Verified', 'Submitted', 'Rejected', 'Assigned'],
+  'Submitted': ['Verified', 'Assigned', 'Work Started', 'Rejected'],
+  'Pending': ['Verified', 'Submitted', 'Assigned', 'Work Started', 'Rejected'],
   'Verified': ['Assigned', 'Work Started', 'In Inspection', 'Officer En Route', 'Rejected'],
   'Assigned': ['Officer En Route', 'Work Started', 'In Inspection', 'Verified', 'Rejected'],
   'Officer En Route': ['Work Started', 'In Inspection', 'Assigned', 'Rejected'],
@@ -27,6 +28,7 @@ const VALID_TRANSITIONS_MAP: Record<string, ComplaintStatus[]> = {
 
 export default function ProgressManagementModal({
   complaint,
+  user,
   onClose,
   onUpdateSuccess,
 }: ProgressManagementModalProps) {
@@ -35,6 +37,7 @@ export default function ProgressManagementModal({
   const [status, setStatus] = useState<ComplaintStatus>(allowedNext[0] || complaint.status);
   const [notes, setNotes] = useState('');
   const [afterImage, setAfterImage] = useState<string | undefined>(complaint.afterImage);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const backdropRef = React.useRef<HTMLDivElement>(null);
@@ -71,14 +74,30 @@ export default function ProgressManagementModal({
     }
     setErrorMessage(null);
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setAfterImage(reader.result as string);
+    reader.onloadend = async () => {
+      const dataUrl = reader.result as string;
+      setAfterImage(dataUrl);
+      setUploadingPhoto(true);
+      try {
+        const uploaded = await api.uploadImage(dataUrl);
+        if (uploaded?.url) {
+          setAfterImage(uploaded.url);
+        }
+      } catch {
+        // Keep local data URL fallback if upload endpoint is unreachable
+      } finally {
+        setUploadingPhoto(false);
+      }
     };
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (status === 'Rejected' && notes.trim().length < 5) {
+      setErrorMessage(i18n.language === 'hi' ? 'अस्वीकृति कारण कम से कम 5 अक्षरों का होना चाहिए।' : 'Rejection reason must be at least 5 characters.');
+      return;
+    }
     setLoading(true);
     setErrorMessage(null);
 
@@ -86,7 +105,7 @@ export default function ProgressManagementModal({
       const updated = await api.updateComplaintStatus(complaint.id, {
         status,
         notes,
-        updatedBy: 'Eng. Vikram Sethi (Municipal Official)',
+        updatedBy: user ? `${user.name} (${user.role})` : 'Municipal Official',
         afterImage,
       });
 
@@ -114,16 +133,16 @@ export default function ProgressManagementModal({
         className="bg-white dark:bg-[#111827] w-full max-w-lg h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-xl border border-slate-200 dark:border-[#374151] shadow-2xl overflow-hidden relative text-left transition-all"
       >
         {/* Sticky Header */}
-        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 dark:border-[#374151] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
+        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-[#374151] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
             <span className="p-2 rounded-lg bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800">
               <Clock className="w-5 h-5" />
             </span>
-            <div>
-              <h3 id="progress-modal-title" className="font-bold text-base text-slate-900 dark:text-white leading-tight">
+            <div className="min-w-0">
+              <h3 id="progress-modal-title" className="font-bold text-sm sm:text-base text-slate-900 dark:text-white leading-tight truncate">
                 {i18n.language === 'hi' ? 'क्षेत्रीय प्रगति व स्थिति अपडेट करें' : 'Update Field Progress & Status'}
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 truncate">
                 {i18n.language === 'hi' ? 'टिकट' : 'Ticket'} <span className="font-mono font-bold text-blue-600 dark:text-blue-400">{complaint.ticketNumber}</span> • Current: <span className="font-semibold text-slate-700 dark:text-slate-300">{translateStatus(complaint.status)}</span>
               </p>
             </div>
@@ -139,7 +158,7 @@ export default function ProgressManagementModal({
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4">
           {errorMessage && (
             <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs">
               {errorMessage}
@@ -206,21 +225,25 @@ export default function ProgressManagementModal({
         </div>
 
         {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-3.5 border-t border-slate-200 dark:border-[#374151] flex items-center justify-end gap-3">
+        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 pb-safe border-t border-slate-200 dark:border-[#374151] flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+            className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
           >
             {i18n.language === 'hi' ? 'रद्द करें' : 'Cancel'}
           </button>
           <button
             type="submit"
             form="progress-form"
-            disabled={loading}
-            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center gap-2 transition-colors disabled:opacity-50"
+            disabled={loading || uploadingPhoto}
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
           >
-            {loading ? (i18n.language === 'hi' ? 'सहेजा जा रहा है...' : 'Saving Update...') : (i18n.language === 'hi' ? 'अपडेट सहेजें व प्रकाशित करें' : 'Save & Publish Status Update')}
+            {uploadingPhoto
+              ? (i18n.language === 'hi' ? 'फोटो अपलोड हो रही है...' : 'Uploading Photo...')
+              : loading
+              ? (i18n.language === 'hi' ? 'सहेजा जा रहा है...' : 'Saving Update...')
+              : (i18n.language === 'hi' ? 'अपडेट सहेजें व प्रकाशित करें' : 'Save & Publish Status Update')}
           </button>
         </div>
       </div>

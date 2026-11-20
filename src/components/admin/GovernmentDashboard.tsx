@@ -64,6 +64,9 @@ export default function GovernmentDashboard({
   onOpenEmergencySOS,
 }: GovernmentDashboardProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth >= 768 && window.innerWidth < 1280 : false
+  );
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [progressModalComplaint, setProgressModalComplaint] = useState<Complaint | null>(null);
 
@@ -114,10 +117,12 @@ export default function GovernmentDashboard({
         unreadNotificationsCount={unreadNotificationsCount}
         isOpenMobile={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
       />
 
-      {/* 2. Main Content Area (Offset for 64w Sidebar on Desktop) */}
-      <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
+      {/* 2. Main Content Area (Offset dynamically for collapsed w-20 or expanded w-64 Sidebar on Tablet/Desktop) */}
+      <div className={`flex-1 flex flex-col min-w-0 transition-all duration-200 ${sidebarCollapsed ? 'md:pl-20' : 'md:pl-64'}`}>
         {/* Top Navigation */}
         <AdminTopNav
           activeTab={currentTab}
@@ -136,7 +141,7 @@ export default function GovernmentDashboard({
         />
 
         {/* Dynamic Page Views */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3 sm:p-5 lg:p-8 2xl:px-10 max-w-[1600px] w-full mx-auto">
           {currentTab === 'overview' && (
             <EnterpriseOverview
               stats={stats}
@@ -152,7 +157,9 @@ export default function GovernmentDashboard({
           {currentTab === 'complaints' && (
             <LiveComplaintsView
               complaints={complaints}
+              user={user}
               onSelectComplaint={(c) => setSelectedComplaint(c)}
+              onOpenProgressModal={(c) => setProgressModalComplaint(c)}
               onRefreshData={onRefreshData}
               onStatusUpdate={onStatusUpdate}
             />
@@ -180,6 +187,7 @@ export default function GovernmentDashboard({
               complaints={complaints}
               onRefreshData={onRefreshData}
               onSelectComplaint={(c) => setSelectedComplaint(c)}
+              onOpenProgressModal={(c) => setProgressModalComplaint(c)}
             />
           )}
 
@@ -220,6 +228,7 @@ export default function GovernmentDashboard({
             <FieldWorkforceView
               complaints={complaints}
               onSelectComplaint={(c) => setSelectedComplaint(c)}
+              onOpenProgressModal={(c) => setProgressModalComplaint(c)}
               onRefreshData={onRefreshData}
             />
           )}
@@ -276,6 +285,7 @@ export default function GovernmentDashboard({
       {progressModalComplaint && (
         <ProgressManagementModal
           complaint={progressModalComplaint}
+          user={user}
           onClose={() => setProgressModalComplaint(null)}
           onUpdateSuccess={() => {
             onRefreshData();

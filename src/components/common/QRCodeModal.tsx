@@ -62,14 +62,14 @@ export default function QRCodeModal({ complaint, onClose }: QRCodeModalProps) {
           <button
             onClick={onClose}
             aria-label="Close modal"
-            className="w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6">
+        <div className="p-5 sm:p-6 pb-safe">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             Scan QR code to access live status & field updates
           </p>

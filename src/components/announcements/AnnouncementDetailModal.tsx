@@ -88,29 +88,29 @@ export default function AnnouncementDetailModal({
   ).slice(0, 3);
 
   return (
-    <div className="fixed inset-0 z-[9990] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
-      <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-auto text-left relative max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-[9990] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden animate-fadeIn">
+      <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-t-2xl sm:rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden text-left relative h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col">
         
         {/* Sticky Header Control Bar */}
-        <div className="p-4 sm:px-6 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between bg-white/90 dark:bg-[#111827]/90 backdrop-blur-md sticky top-0 z-20 shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">
-              <Megaphone className="w-5 h-5" />
+        <div className="p-3.5 sm:px-6 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-2 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md sticky top-0 z-20 shrink-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 shrink-0">
+              <Megaphone className="w-4 h-4 sm:w-5 sm:h-5" />
             </span>
-            <div>
-              <div className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            <div className="min-w-0">
+              <div className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider truncate">
                 Official Municipal Notice
               </div>
-              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+              <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                 Ref ID: #{announcement.id.toUpperCase()}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             <button
               onClick={() => onToggleBookmark(announcement.id)}
-              className={`p-2 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              className={`min-w-[40px] min-h-[40px] px-2.5 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
                 isBookmarked
                   ? 'bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400'
                   : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -123,7 +123,7 @@ export default function AnnouncementDetailModal({
 
             <button
               onClick={handleShare}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="min-w-[40px] min-h-[40px] px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Share2 className="w-4 h-4" />}
               <span className="hidden sm:inline">{copied ? 'Link Copied' : 'Share'}</span>
@@ -131,7 +131,7 @@ export default function AnnouncementDetailModal({
 
             <button
               onClick={handlePrint}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold hidden sm:flex items-center gap-1.5 transition-colors"
+              className="min-w-[40px] min-h-[40px] px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold hidden sm:flex items-center gap-1.5 transition-colors"
               title="Print Document"
             >
               <Printer className="w-4 h-4" />
@@ -140,7 +140,8 @@ export default function AnnouncementDetailModal({
 
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition-colors ml-2"
+              aria-label="Close announcement"
+              className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors ml-1"
             >
               <X className="w-5 h-5" />
             </button>
@@ -148,7 +149,7 @@ export default function AnnouncementDetailModal({
         </div>
 
         {/* Scrollable Content Body */}
-        <div className="p-6 sm:p-8 overflow-y-auto space-y-6 flex-1">
+        <div className="p-4 sm:p-8 overflow-y-auto overscroll-contain space-y-5 sm:space-y-6 flex-1">
           {/* Banner Image with Overlay Badges */}
           {announcement.bannerImage && (
             <div className="relative rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 aspect-video sm:aspect-[21/9] bg-slate-900 shadow-md">
@@ -193,7 +194,7 @@ export default function AnnouncementDetailModal({
           </div>
 
           {/* Metadata Grid Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 min-[400px]:grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60">
               <div className="flex items-center gap-1.5 text-slate-400 text-[11px] font-semibold mb-1">
                 <Building2 className="w-3.5 h-3.5 text-blue-500" />
@@ -355,20 +356,18 @@ export default function AnnouncementDetailModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:px-6 border-t border-[#E5E7EB] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#111827] flex flex-wrap items-center justify-between gap-3 shrink-0">
+        <div className="p-4 sm:px-6 pb-safe border-t border-[#E5E7EB] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#111827] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
           <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-emerald-500" />
+            <ShieldAlert className="w-4 h-4 text-emerald-500 shrink-0" />
             <span>Verified Smart City Municipal Gazette Communications</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onClose}
-              className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
-            >
-              Close Gazette
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[42px] rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-xs shadow-md hover:opacity-90 transition-opacity"
+          >
+            Close Gazette
+          </button>
         </div>
 
       </div>

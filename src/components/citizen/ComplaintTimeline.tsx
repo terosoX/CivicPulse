@@ -88,8 +88,8 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
         className="bg-white dark:bg-[#111827] w-full max-w-3xl h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-t-2xl sm:rounded-xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl overflow-hidden relative text-left transition-all"
       >
         {/* Sticky Header */}
-        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-5 sm:px-7 py-4 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3">
-          <div className="flex-1 min-w-0 pr-2">
+        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-7 py-3.5 sm:py-4 border-b border-[#E5E7EB] dark:border-[#374151] flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
+          <div className="flex-1 min-w-[200px]">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-xs font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 rounded-md border border-blue-200 dark:border-blue-800">
                 {complaint.ticketNumber}
@@ -101,33 +101,35 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
                 • {translateCategory(complaint.category)}
               </span>
             </div>
-            <h2 id="complaint-modal-title" className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-1 truncate">
+            <h2 id="complaint-modal-title" className="text-sm sm:text-lg font-bold text-slate-900 dark:text-white mt-1 line-clamp-2 sm:truncate">
               {complaint.title}
             </h2>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
             {(complaint.status === 'Resolved' || complaint.status === 'Closed') && (
               <button
                 onClick={() => exportResolutionCertificatePDF(complaint)}
-                className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+                className="px-2.5 sm:px-3 py-2 min-h-[38px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
                 title="Download Official Resolution Certificate PDF"
               >
-                📜 <span className="hidden sm:inline">Certificate PDF</span>
+                <span>📜</span>
+                <span className="hidden sm:inline">Certificate PDF</span>
               </button>
             )}
 
             <button
               onClick={() => exportComplaintsToPDF([complaint], `Grievance Receipt - ${complaint.ticketNumber}`)}
-              className="px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 flex items-center gap-1.5 transition-colors"
+              className="px-2.5 sm:px-3 py-2 min-h-[38px] rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 text-xs font-bold hover:bg-blue-100 flex items-center gap-1.5 transition-colors"
               title="Download Complaint Receipt PDF"
             >
-              📄 <span className="hidden sm:inline">Receipt</span>
+              <span>📄</span>
+              <span className="hidden sm:inline">Receipt</span>
             </button>
 
             <button
               onClick={() => setQrOpen(true)}
-              className="px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
+              className="px-2.5 sm:px-3 py-2 min-h-[38px] rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-1.5 transition-colors"
               title="View QR Code Ticket"
             >
               <QrCode className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -158,8 +160,46 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
               {i18n.language === 'hi' ? 'शिकायत समाधान समयरेखा' : 'Lifecycle Resolution Timeline'}
             </h3>
 
-            <div className="overflow-x-auto snap-x scrollbar-thin pb-2">
-              <div className="relative flex items-center justify-between min-w-[580px] px-4 py-2">
+            {/* Mobile Vertical Stepper (< md) */}
+            <div className="flex flex-col gap-3 md:hidden">
+              {TIMELINE_STEPS.map((step, idx) => {
+                const isDone = idx <= currentIndex;
+                const isCurrent = idx === currentIndex;
+                const isLast = idx === TIMELINE_STEPS.length - 1;
+                return (
+                  <div key={step.status} className="flex items-start gap-3">
+                    <div className="flex flex-col items-center">
+                      <div
+                        className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 transition-all ${
+                          isDone
+                            ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/30'
+                            : 'bg-white dark:bg-slate-800 text-slate-400 border border-slate-300 dark:border-slate-700'
+                        } ${isCurrent ? 'ring-3 ring-blue-100 dark:ring-blue-950' : ''}`}
+                      >
+                        {isDone ? <CheckCircle2 className="w-4 h-4" /> : idx + 1}
+                      </div>
+                      {!isLast && (
+                        <div className={`w-0.5 h-4 mt-1 ${idx < currentIndex ? 'bg-blue-600' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                      )}
+                    </div>
+                    <div className="pt-1 flex items-center justify-between flex-1 min-w-0">
+                      <span className={`text-xs font-bold ${isCurrent ? 'text-blue-600 dark:text-blue-400' : isDone ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                        {translateStatus(step.status)}
+                      </span>
+                      {isCurrent && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+                          Current
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Horizontal Stepper (md+) */}
+            <div className="hidden md:block">
+              <div className="relative flex items-center justify-between px-4 py-2">
                 {/* Background Line */}
                 <div className="absolute left-8 right-8 top-6 h-1 bg-slate-200 dark:bg-slate-700 -z-0" />
                 <div
@@ -172,7 +212,7 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
                   const isCurrent = idx === currentIndex;
 
                   return (
-                    <div key={step.status} className="relative z-10 flex flex-col items-center text-center w-20 snap-center">
+                    <div key={step.status} className="relative z-10 flex flex-col items-center text-center flex-1 min-w-0 px-1">
                       <div
                         className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
                           isDone
@@ -203,7 +243,7 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
                 <span>{complaint.departmentAssigned || 'Roads & Infrastructure'}</span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                {i18n.language === 'hi' ? 'प्रभारी अधिकारी: ' : 'Officer In-Charge: '}{complaint.officerAssigned || 'Eng. Vikram Sethi'}
+                {i18n.language === 'hi' ? 'प्रभारी अधिकारी: ' : 'Officer In-Charge: '}{complaint.officerAssigned || (i18n.language === 'hi' ? 'आवंटन लंबित' : 'Pending Assignment')}
               </p>
             </div>
 
@@ -231,8 +271,8 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
               {complaint.description}
             </p>
             {complaint.aiAnalysis && (
-              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500 font-medium">{i18n.language === 'hi' ? 'AI श्रेणी: ' : 'AI Triage Classification: '}<strong className="text-blue-600 dark:text-blue-400">{translateCategory(complaint.aiAnalysis.detectedCategory as any)}</strong></span>
+              <div className="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                <span className="text-slate-500 font-medium">{i18n.language === 'hi' ? 'नियम-आधारित श्रेणी: ' : 'Rule-Based Triage: '}<strong className="text-blue-600 dark:text-blue-400">{translateCategory(complaint.aiAnalysis.detectedCategory as any)}</strong></span>
                 <span className="font-mono text-emerald-600 dark:text-emerald-400 font-bold">{i18n.language === 'hi' ? 'प्राथमिकता: ' : 'Priority: '}{complaint.aiAnalysis.suggestedPriority}</span>
               </div>
             )}
@@ -293,37 +333,66 @@ export default function ComplaintTimeline({ complaint, onClose, onFeedbackSubmit
             </div>
           </div>
 
-          {/* Citizen Feedback Trigger if Resolved */}
-          {(complaint.status === 'Resolved' || complaint.status === 'Closed') && (
-            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 flex flex-col sm:flex-row items-center justify-between gap-3">
-              <div>
-                <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
-                  {i18n.language === 'hi' ? 'नगर निगम दल द्वारा कार्य पूर्ण' : 'Work Completed by Municipal Crew'}
-                </h4>
-                <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
-                  {i18n.language === 'hi' ? 'कृपया मरम्मत की पुष्टि करें और टिकट बंद करने के लिए रेटिंग दें।' : 'Please verify the site repair and leave your rating to close this ticket.'}
-                </p>
+          {/* Citizen Feedback Section: Show existing rating OR prompt for verification */}
+          {complaint.feedback ? (
+            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                    {i18n.language === 'hi' ? 'नागरिक द्वारा सत्यापित व रेटेड' : 'Citizen Verified & Rated'}
+                  </h4>
+                </div>
+                <div className="flex items-center gap-1 text-amber-500 text-sm" aria-label={`Rated ${complaint.feedback.rating} out of 5`}>
+                  {'★'.repeat(complaint.feedback.rating)}
+                  {'☆'.repeat(Math.max(0, 5 - complaint.feedback.rating))}
+                  <span className="ml-1 text-xs font-mono font-bold text-emerald-800 dark:text-emerald-300">
+                    ({complaint.feedback.rating}/5)
+                  </span>
+                </div>
               </div>
-
-              <button
-                onClick={() => setFeedbackOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 shrink-0 transition-colors"
-              >
-                <Star className="w-4 h-4 fill-white" />
-                <span>{i18n.language === 'hi' ? 'सत्यापित करें और रेटिंग दें' : 'Verify & Rate Work'}</span>
-              </button>
+              {complaint.feedback.review && (
+                <p className="text-xs text-emerald-800 dark:text-emerald-300 italic">
+                  "{complaint.feedback.review}"
+                </p>
+              )}
+              <div className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                {i18n.language === 'hi' ? 'प्रस्तुत तिथि: ' : 'Submitted: '}
+                {formatDate(complaint.feedback.createdAt || complaint.updatedAt)}
+              </div>
             </div>
+          ) : (
+            (complaint.status === 'Resolved' || complaint.status === 'Closed') && (
+              <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-xs font-bold text-emerald-900 dark:text-emerald-200">
+                    {i18n.language === 'hi' ? 'नगर निगम दल द्वारा कार्य पूर्ण' : 'Work Completed by Municipal Crew'}
+                  </h4>
+                  <p className="text-[11px] text-emerald-700 dark:text-emerald-300">
+                    {i18n.language === 'hi' ? 'कृपया मरम्मत की पुष्टि करें और टिकट बंद करने के लिए रेटिंग दें।' : 'Please verify the site repair and leave your rating to close this ticket.'}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setFeedbackOpen(true)}
+                  className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1.5 shrink-0 transition-colors"
+                >
+                  <Star className="w-4 h-4 fill-white" />
+                  <span>{i18n.language === 'hi' ? 'सत्यापित करें और रेटिंग दें' : 'Verify & Rate Work'}</span>
+                </button>
+              </div>
+            )
           )}
         </div>
 
         {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-5 sm:px-7 py-3.5 border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3">
+        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-7 py-3.5 pb-safe border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3">
           <div className="text-[11px] text-slate-400 hidden sm:block">
             {i18n.language === 'hi' ? 'बंद करने के लिए ESC दबाएं या बाहर क्लिक करें' : 'Press ESC or click outside to dismiss'}
           </div>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors shadow-xs"
+            className="w-full sm:w-auto px-6 py-2.5 min-h-[42px] rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-bold hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors shadow-xs"
           >
             {i18n.language === 'hi' ? 'विवरण बंद करें' : 'Close Details'}
           </button>

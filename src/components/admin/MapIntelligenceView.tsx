@@ -83,7 +83,17 @@ export default function MapIntelligenceView({
     heatmapLayerRef.current = L.layerGroup().addTo(map);
     mapInstanceRef.current = map;
 
+    const containerEl = mapContainerRef.current;
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined' && containerEl) {
+      observer = new ResizeObserver(() => {
+        mapInstanceRef.current?.invalidateSize();
+      });
+      observer.observe(containerEl);
+    }
+
     return () => {
+      observer?.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -187,10 +197,10 @@ export default function MapIntelligenceView({
         </div>
 
         {/* Heatmap & Marker Toggles */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => setShowHeatmap((prev) => !prev)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+            className={`min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 cursor-pointer ${
               showHeatmap
                 ? 'bg-[#14B8A6]/10 text-[#0D9488] border-[#99F6E4]'
                 : 'bg-white dark:bg-[#111827] text-[#667085] border-[#D0D5DD] dark:border-[#374151]'
@@ -202,7 +212,7 @@ export default function MapIntelligenceView({
 
           <button
             onClick={() => setShowMarkers((prev) => !prev)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 ${
+            className={`min-h-[38px] px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors flex items-center gap-1.5 cursor-pointer ${
               showMarkers
                 ? 'bg-[#2563EB]/10 text-[#2563EB] border-[#BFDBFE]'
                 : 'bg-white dark:bg-[#111827] text-[#667085] border-[#D0D5DD] dark:border-[#374151]'
@@ -215,15 +225,15 @@ export default function MapIntelligenceView({
       </div>
 
       {/* Filter Row Card */}
-      <div className="p-3.5 rounded-xl bg-white dark:bg-[#111827] border border-[#EAECF0] dark:border-[#374151] shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <div className="p-3.5 rounded-xl bg-white dark:bg-[#111827] border border-[#EAECF0] dark:border-[#374151] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 text-xs w-full md:w-auto">
           {/* Ward Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-[#667085]">Ward:</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[11px] font-semibold text-[#667085] shrink-0">Ward:</span>
             <select
               value={selectedWard}
               onChange={(e) => setSelectedWard(e.target.value)}
-              className="px-2.5 py-1 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#101828] dark:text-white"
+              className="w-full sm:w-auto min-h-[36px] px-2.5 py-1 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#101828] dark:text-white"
             >
               {wards.map((w) => (
                 <option key={w} value={w}>
@@ -234,12 +244,12 @@ export default function MapIntelligenceView({
           </div>
 
           {/* Status Filter */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-[#667085]">Status:</span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[11px] font-semibold text-[#667085] shrink-0">Status:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-2.5 py-1 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#101828] dark:text-white"
+              className="w-full sm:w-auto min-h-[36px] px-2.5 py-1 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#101828] dark:text-white"
             >
               <option value="All">All Statuses</option>
               <option value="Submitted">Submitted</option>
@@ -253,7 +263,7 @@ export default function MapIntelligenceView({
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 text-[11px] text-[#667085]">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-[#667085]">
           <span className="flex items-center gap-1">
             <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" /> Roads
           </span>
@@ -273,22 +283,23 @@ export default function MapIntelligenceView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Leaflet Map (8 or 12 cols) */}
         <div className={`${selectedMarkerComplaint ? 'lg:col-span-8' : 'lg:col-span-12'} transition-all`}>
-          <div className="relative h-[560px] w-full rounded-xl border border-[#EAECF0] dark:border-[#374151] overflow-hidden shadow-xs">
+          <div className="relative h-[340px] sm:h-[460px] lg:h-[560px] w-full rounded-xl border border-[#EAECF0] dark:border-[#374151] overflow-hidden shadow-xs">
             <div ref={mapContainerRef} className="h-full w-full" />
           </div>
         </div>
 
         {/* Selected Complaint Slide-In Panel */}
         {selectedMarkerComplaint && (
-          <div className="lg:col-span-4 rounded-xl bg-white dark:bg-[#111827] border border-[#EAECF0] dark:border-[#374151] shadow-xs p-5 flex flex-col justify-between space-y-4 animate-in fade-in duration-150">
+          <div className="lg:col-span-4 rounded-xl bg-white dark:bg-[#111827] border border-[#EAECF0] dark:border-[#374151] shadow-xs p-4 sm:p-5 flex flex-col justify-between space-y-4 animate-in fade-in duration-150">
             <div>
-              <div className="flex items-center justify-between pb-2 border-b border-[#EAECF0] dark:border-[#374151]">
+              <div className="flex items-center justify-between gap-2 pb-2 border-b border-[#EAECF0] dark:border-[#374151]">
                 <span className="font-mono text-xs font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded border border-[#BFDBFE]">
                   {selectedMarkerComplaint.ticketNumber}
                 </span>
                 <button
                   onClick={() => setSelectedMarkerComplaint(null)}
-                  className="p-1 rounded-md text-[#667085] hover:text-[#101828]"
+                  aria-label="Close complaint preview"
+                  className="w-9 h-9 rounded-md text-[#667085] hover:text-[#101828] dark:hover:text-white flex items-center justify-center cursor-pointer"
                 >
                   <X className="w-4 h-4" />
                 </button>

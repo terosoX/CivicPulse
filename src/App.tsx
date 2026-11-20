@@ -268,7 +268,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden flex flex-col font-sans antialiased bg-[#F5F7FA] dark:bg-[#0B1120] text-[#111827] dark:text-[#F9FAFB] transition-colors duration-200">
+    <div className="min-h-screen w-full max-w-full overflow-x-clip flex flex-col font-sans antialiased bg-[#F5F7FA] dark:bg-[#0B1120] text-[#111827] dark:text-[#F9FAFB] transition-colors duration-200">
       {currentView !== 'government' && currentView !== 'super_admin' && (
         <Navbar
           currentView={currentView}

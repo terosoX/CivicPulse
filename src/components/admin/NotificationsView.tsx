@@ -118,12 +118,12 @@ export default function NotificationsView({
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-1 p-1 bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-xl text-xs font-medium w-fit shadow-2xs">
+      <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-xl text-xs font-medium w-full sm:w-fit overflow-x-auto no-scrollbar shadow-2xs">
         {['All', 'Unread', 'Status Update', 'Field Crew', 'Public Notice', 'System Alert'].map((f) => (
           <button
             key={f}
             onClick={() => setFilterType(f)}
-            className={`px-3 py-1.5 rounded-lg transition-colors ${
+            className={`px-3 py-2 min-h-[36px] rounded-lg whitespace-nowrap shrink-0 transition-colors ${
               filterType === f
                 ? 'bg-[#2563EB] text-white shadow-xs font-semibold'
                 : 'text-[#667085] dark:text-[#9CA3AF] hover:text-[#111827] dark:hover:text-[#F9FAFB]'
@@ -149,13 +149,13 @@ export default function NotificationsView({
             <div
               key={n.id}
               onClick={() => handleMarkRead(n)}
-              className={`p-4 sm:p-5 flex items-start justify-between gap-4 transition-colors cursor-pointer ${
+              className={`p-4 sm:p-5 flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 transition-colors cursor-pointer ${
                 n.read
                   ? 'bg-white dark:bg-[#111827] hover:bg-[#F9FAFB] dark:hover:bg-[#1F2937]'
                   : 'bg-[#EFF6FF]/40 dark:bg-blue-950/20 hover:bg-[#EFF6FF]/70 dark:hover:bg-blue-950/30'
               }`}
             >
-              <div className="flex items-start gap-3.5 min-w-0">
+              <div className="flex items-start gap-3 sm:gap-3.5 min-w-0">
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                     n.type === 'message'
@@ -190,7 +190,7 @@ export default function NotificationsView({
                   <p className="text-xs text-[#344054] dark:text-[#D1D5DB] mt-1 leading-relaxed">
                     {n.message}
                   </p>
-                  <div className="mt-2 flex items-center gap-3 text-[11px] text-[#667085] dark:text-[#9CA3AF]">
+                  <div className="mt-2 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] text-[#667085] dark:text-[#9CA3AF]">
                     <span className="px-2 py-0.5 rounded font-medium bg-[#F9FAFB] dark:bg-[#1F2937] border border-[#E5E7EB] dark:border-[#374151]">
                       {mapCategoryLabel(n.type)}
                     </span>
@@ -205,7 +205,7 @@ export default function NotificationsView({
                     e.stopPropagation();
                     handleMarkRead(n);
                   }}
-                  className="text-xs font-semibold text-[#2563EB] dark:text-[#60A5FA] hover:underline shrink-0 self-center"
+                  className="text-xs font-semibold text-[#2563EB] dark:text-[#60A5FA] hover:underline shrink-0 self-start sm:self-center ml-12 sm:ml-0"
                 >
                   Mark Read
                 </button>

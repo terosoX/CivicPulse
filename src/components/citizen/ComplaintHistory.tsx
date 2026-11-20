@@ -15,11 +15,13 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('All');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
+  const [priorityFilter, setPriorityFilter] = useState<string>('All');
   const [wardFilter, setWardFilter] = useState<string>('All');
 
   const filtered = complaints.filter((c) => {
     if (statusFilter !== 'All' && c.status !== statusFilter) return false;
     if (categoryFilter !== 'All' && c.category !== categoryFilter) return false;
+    if (priorityFilter !== 'All' && c.priority !== priorityFilter) return false;
     if (wardFilter !== 'All' && c.location.ward !== wardFilter) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -49,11 +51,11 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
             />
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 sm:grid-cols-4 md:flex md:flex-wrap items-center gap-2 w-full md:w-auto">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-[#1F2937] text-[#111827] dark:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151] focus:outline-none cursor-pointer"
+              className="w-full md:w-auto min-h-[38px] px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-[#1F2937] text-[#111827] dark:text-[#F9FAFB] border border-[#E5E7EB] dark:border-[#374151] focus:outline-none cursor-pointer"
             >
               <option value="All">{i18n.language === 'hi' ? 'सभी स्थितियाँ' : 'All Statuses'}</option>
               <option value="Submitted">{translateStatus('Submitted')}</option>
@@ -69,7 +71,7 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 focus:outline-none cursor-pointer max-w-[160px]"
+              className="w-full md:w-auto md:max-w-[160px] min-h-[38px] px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 focus:outline-none cursor-pointer"
             >
               <option value="All">{i18n.language === 'hi' ? 'सभी श्रेणियां' : 'All Categories'}</option>
               <option value="Potholes & Road Damage">{translateCategory('Potholes & Road Damage')}</option>
@@ -80,12 +82,26 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
               <option value="Fallen Tree & Horticulture">{translateCategory('Fallen Tree & Horticulture')}</option>
               <option value="Illegal Dumping & Encroachment">{translateCategory('Illegal Dumping & Encroachment')}</option>
               <option value="Parks & Public Amenities">{translateCategory('Parks & Public Amenities')}</option>
+              <option value="Public Health & Sanitation">{translateCategory('Public Health & Sanitation')}</option>
+              <option value="Traffic & Signage Issues">{translateCategory('Traffic & Signage Issues')}</option>
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="w-full md:w-auto md:max-w-[140px] min-h-[38px] px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 focus:outline-none cursor-pointer"
+            >
+              <option value="All">{i18n.language === 'hi' ? 'सभी प्राथमिकताएं' : 'All Priorities'}</option>
+              <option value="Critical">{translatePriority('Critical')}</option>
+              <option value="High">{translatePriority('High')}</option>
+              <option value="Medium">{translatePriority('Medium')}</option>
+              <option value="Low">{translatePriority('Low')}</option>
             </select>
 
             <select
               value={wardFilter}
               onChange={(e) => setWardFilter(e.target.value)}
-              className="px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 focus:outline-none cursor-pointer max-w-[160px]"
+              className="w-full md:w-auto md:max-w-[160px] min-h-[38px] px-2.5 py-2 rounded-lg text-xs font-medium bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 focus:outline-none cursor-pointer"
             >
               <option value="All">{i18n.language === 'hi' ? 'सभी वार्ड' : 'All Wards'}</option>
               <option value="Ward 1 - Metro North">Ward 1 - Metro North</option>
@@ -175,10 +191,10 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
                   </div>
                 </div>
 
-                <div className="p-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between text-xs">
+                <div className="p-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] flex flex-wrap items-center justify-between gap-2 text-xs">
                   <button
                     onClick={() => onUpvote(c.id)}
-                    className="flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 font-medium cursor-pointer"
+                    className="min-h-[36px] px-2 flex items-center gap-1.5 text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 font-medium cursor-pointer"
                   >
                     <ThumbsUp className="w-3.5 h-3.5" />
                     <span>{formatNumber(c.upvotes)} upvotes</span>
@@ -186,7 +202,7 @@ export default function ComplaintHistory({ complaints, onViewComplaint, onUpvote
 
                   <button
                     onClick={() => onViewComplaint(c)}
-                    className="px-3 py-1.5 rounded-md bg-blue-700 hover:bg-blue-800 text-white font-medium text-xs flex items-center gap-1 cursor-pointer transition-colors"
+                    className="min-h-[36px] px-3 py-1.5 rounded-md bg-blue-700 hover:bg-blue-800 text-white font-medium text-xs flex items-center gap-1 cursor-pointer transition-colors"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>Track</span>

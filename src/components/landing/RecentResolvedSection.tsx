@@ -18,16 +18,16 @@ export default function RecentResolvedSection({ complaints, onViewComplaint }: R
 
   return (
     <section className="py-12 sm:py-16 bg-white dark:bg-[#0B1120] border-b border-[#E5E7EB] dark:border-[#374151] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2 text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>Public Service Transparency</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="fluid-section-title font-bold text-slate-900 dark:text-white">
               {filter === 'resolved' ? t('landing.recentResolved') : 'Recent Civic Reports'}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xl">
@@ -36,10 +36,10 @@ export default function RecentResolvedSection({ complaints, onViewComplaint }: R
           </div>
 
           {/* Clean Segmented Filter */}
-          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium self-start sm:self-auto">
+          <div className="flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-lg text-xs font-medium self-start sm:self-auto max-w-full overflow-x-auto no-scrollbar">
             <button
               onClick={() => setFilter('resolved')}
-              className={`px-3 py-1.5 rounded-md transition-colors ${
+              className={`min-h-[36px] px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 filter === 'resolved'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -49,7 +49,7 @@ export default function RecentResolvedSection({ complaints, onViewComplaint }: R
             </button>
             <button
               onClick={() => setFilter('all')}
-              className={`px-3 py-1.5 rounded-md transition-colors ${
+              className={`min-h-[36px] px-3 py-1.5 rounded-md transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 filter === 'all'
                   ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-semibold'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -166,11 +166,11 @@ export default function RecentResolvedSection({ complaints, onViewComplaint }: R
                   </div>
 
                   {/* Card Footer */}
-                  <div className="px-4 py-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between text-xs">
+                  <div className="px-4 py-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] flex flex-wrap items-center justify-between gap-2 text-xs">
                     <span className="text-slate-500 text-[11px]">
                       {formatDate(c.updatedAt || c.createdAt)}
                     </span>
-                    <span className="font-medium text-blue-700 dark:text-blue-400 inline-flex items-center gap-1 hover:underline">
+                    <span className="font-medium text-blue-700 dark:text-blue-400 inline-flex items-center gap-1 hover:underline shrink-0">
                       <span>View details</span>
                       <ArrowRight className="w-3 h-3" />
                     </span>

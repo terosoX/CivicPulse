@@ -117,7 +117,18 @@ export default function EnterpriseReportIssueView({
 
     mapInstanceRef.current = map;
 
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => {
+            map.invalidateSize();
+          })
+        : null;
+    if (resizeObserver && mapContainerRef.current) {
+      resizeObserver.observe(mapContainerRef.current);
+    }
+
     return () => {
+      resizeObserver?.disconnect();
       map.remove();
       mapInstanceRef.current = null;
     };
@@ -149,10 +160,15 @@ export default function EnterpriseReportIssueView({
       return next;
     });
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64 = reader.result as string;
-      setImages((prev) => [...prev, base64]);
       runAIInference(base64);
+      try {
+        const uploaded = await api.uploadImage(base64);
+        setImages((prev) => [...prev, uploaded?.url || base64]);
+      } catch {
+        setImages((prev) => [...prev, base64]);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -325,9 +341,9 @@ export default function EnterpriseReportIssueView({
           )}
 
           {/* 1. Photograph Upload & Drag-and-Drop Area */}
-          <div className="p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
                 <h3 className="text-xs font-bold text-[#101828] dark:text-white uppercase tracking-wider">
                   1. Evidence Photograph
                 </h3>
@@ -335,7 +351,7 @@ export default function EnterpriseReportIssueView({
                   Upload an image of the pothole, waste dump, or broken infrastructure
                 </p>
               </div>
-              <span className="text-[10px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded font-semibold border border-[#BFDBFE]">
+              <span className="text-[10px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded font-semibold border border-[#BFDBFE] shrink-0">
                 AI Auto-Triage Enabled
               </span>
             </div>
@@ -408,15 +424,15 @@ export default function EnterpriseReportIssueView({
 
             {aiResult && !aiAnalyzing && (
               <div className="p-4 rounded-xl bg-[#EFF6FF] dark:bg-[#0F1E36] border border-[#BFDBFE] dark:border-[#1E3A8A] space-y-2.5">
-                <div className="flex items-center justify-between pb-2 border-b border-[#DBEAFE] dark:border-[#1E3A8A]">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[#DBEAFE] dark:border-[#1E3A8A]">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#2563EB]" />
                     <span className="text-xs font-bold text-[#1E40AF] dark:text-[#93C5FD]">
-                      AI Analysis Panel
+                      Rule-Based Bilingual Triage Panel
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-[#16A34A] bg-[#DCFCE7] px-2 py-0.5 rounded border border-[#86EFAC]">
-                    Confidence: {aiResult.priorityConfidence || 94.8}%
+                  <span className="text-[11px] font-bold text-[#1E40AF] dark:text-[#93C5FD] bg-white dark:bg-[#111827] px-2 py-0.5 rounded border border-[#BFDBFE] dark:border-[#1E3A8A]">
+                    {aiResult.trainedModelLoaded ? 'Hybrid ML + Rules' : `Deterministic Ontology (${aiResult.matchedRuleCount ?? aiResult.keyKeywords?.length ?? 0} keyword matches)`}
                   </span>
                 </div>
 
@@ -457,7 +473,7 @@ export default function EnterpriseReportIssueView({
           </div>
 
           {/* 2. Issue Details */}
-          <div className="p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
             <h3 className="text-xs font-bold text-[#101828] dark:text-white uppercase tracking-wider">
               2. Issue Details & Category
             </h3>
@@ -534,9 +550,9 @@ export default function EnterpriseReportIssueView({
           </div>
 
           {/* 3. Location & Interactive Map Pin Selector */}
-          <div className="p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2.5">
+              <div className="min-w-0">
                 <h3 className="text-xs font-bold text-[#101828] dark:text-white uppercase tracking-wider">
                   3. Location & GPS Geocoding
                 </h3>
@@ -549,7 +565,7 @@ export default function EnterpriseReportIssueView({
                 type="button"
                 onClick={handleDetectGPS}
                 disabled={gpsDetecting}
-                className="px-2.5 py-1.5 rounded-lg bg-[#EFF6FF] dark:bg-blue-950/40 hover:bg-[#DBEAFE] dark:hover:bg-blue-950/60 text-[#2563EB] dark:text-[#60A5FA] text-xs font-semibold flex items-center gap-1.5 transition-colors border border-[#BFDBFE] dark:border-blue-900/60"
+                className="w-full sm:w-auto min-h-[36px] px-3 py-1.5 rounded-lg bg-[#EFF6FF] dark:bg-blue-950/40 hover:bg-[#DBEAFE] dark:hover:bg-blue-950/60 text-[#2563EB] dark:text-[#60A5FA] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-[#BFDBFE] dark:border-blue-900/60 shrink-0"
               >
                 <Navigation className="w-3.5 h-3.5" />
                 <span>{gpsDetecting ? 'Detecting...' : 'Detect My GPS'}</span>
@@ -597,7 +613,7 @@ export default function EnterpriseReportIssueView({
 
             {/* Interactive Leaflet Map Selector */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-[#667085]">
+              <div className="flex flex-wrap items-center justify-between gap-1 text-[11px] text-[#667085]">
                 <span>Click on map or drag pin to fine-tune exact coordinates</span>
                 <span className="font-mono text-[#2563EB]">
                   {lat.toFixed(4)}, {lng.toFixed(4)}
@@ -605,13 +621,13 @@ export default function EnterpriseReportIssueView({
               </div>
               <div
                 ref={mapContainerRef}
-                className="h-56 w-full rounded-lg border border-[#EAECF0] dark:border-[#334155] overflow-hidden"
+                className="h-52 sm:h-56 w-full rounded-lg border border-[#EAECF0] dark:border-[#334155] overflow-hidden"
               />
             </div>
           </div>
 
           {/* 4. Contact Information */}
-          <div className="p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+          <div className="p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
             <h3 className="text-xs font-bold text-[#101828] dark:text-white uppercase tracking-wider">
               4. Citizen Contact Information
             </h3>
@@ -660,7 +676,7 @@ export default function EnterpriseReportIssueView({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-50 transition-colors shadow-xs flex items-center gap-2"
+              className="w-full sm:w-auto min-h-[44px] px-6 py-2.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-50 transition-colors shadow-xs flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
                 <>

@@ -163,7 +163,7 @@ def classify_complaint_local(
     fake_score = min(95, max(2, fake_score))
 
     addr_label = f"near {address}" if address else "in assigned municipal zone"
-    summary = f"Local AI classified '{title or 'Complaint'}' as {best_category} ({priority} Priority) routed to {best_dept} {addr_label}."
+    summary = f"Rule-based bilingual ontology matched '{title or 'Complaint'}' as {best_category} ({priority} Priority) routed to {best_dept} {addr_label}."
 
     return {
         "detectedCategory": best_category,
@@ -174,10 +174,14 @@ def classify_complaint_local(
         "duplicateFound": False,
         "summary": summary,
         "keyKeywords": matched_keywords[:5] if matched_keywords else ["civic", "infrastructure", "municipal"],
+        "classificationMethod": "rule-based-bilingual-ontology",
+        "trainedModelLoaded": False,
+        "visionAdapter": "unloaded-stub",
+        "matchedRuleCount": len(matched_keywords),
     }
 
-def forecast_complaint_trends(total_complaints: int, active_by_ward: Dict[str, int]) -> Dict[str, Any]:
-    """Scikit-Learn Regression style volume forecasting for municipal resource allocation."""
+def forecast_complaint_trends(total_complaints: int, active_by_ward: Dict[str, int], resolved_count: int = 0) -> Dict[str, Any]:
+    """Statistical linear volume estimation for municipal resource allocation (no trained neural weights)."""
     forecasts = []
     for ward_name, active in active_by_ward.items():
         trend = 1.15 if active > 5 else 0.95
@@ -194,11 +198,13 @@ def forecast_complaint_trends(total_complaints: int, active_by_ward: Dict[str, i
             "recommendedFieldCrews": crews,
         })
 
+    real_rate = round((resolved_count / total_complaints) * 100) if total_complaints > 0 else 0
     return {
-        "model": "CivicPulse Local Trend Estimator (Scikit-Learn Formulation)",
+        "model": "CivicPulse Statistical Queue Estimator (Deterministic Linear Projection)",
+        "trainedModelLoaded": False,
         "trainedOnRecords": total_complaints,
-        "globalResolutionRate": 88,
+        "globalResolutionRate": real_rate,
         "forecastHorizonDays": [7, 30],
         "wardForecasts": forecasts,
-        "seasonalSurgeAlert": "Monsoon drainage and road wear surge coefficient: +18%",
+        "seasonalSurgeAlert": f"Active backlog ratio: {100 - real_rate}% across {len(forecasts)} monitored wards" if total_complaints > 0 else "No active backlog records in database",
     }

@@ -80,12 +80,12 @@ export default function AuditLogsView() {
     <div className="space-y-6 text-left">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[#EAECF0] dark:border-[#1E293B]">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[#101828] dark:text-white tracking-tight">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-[#101828] dark:text-white tracking-tight">
               System Audit Trails & Security Logs
             </h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#A7F3D0]">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#16A34A]/10 text-[#16A34A] border border-[#A7F3D0] whitespace-nowrap">
               Immutable SHA-256 Ledger
             </span>
           </div>
@@ -94,7 +94,7 @@ export default function AuditLogsView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <button
             onClick={() => {
               const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(logs, null, 2));
@@ -105,7 +105,7 @@ export default function AuditLogsView() {
               downloadAnchor.click();
               downloadAnchor.remove();
             }}
-            className="px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="w-full sm:w-auto min-h-[38px] px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
           >
             <Download className="w-3.5 h-3.5 text-[#667085]" />
             <span>Export JSON Ledger</span>
@@ -138,9 +138,43 @@ export default function AuditLogsView() {
         </select>
       </div>
 
-      {/* Audit Log Table */}
+      {/* Audit Log Mobile Cards + Desktop Table */}
       <div className="rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-[#EAECF0] dark:divide-[#334155]">
+          {filteredLogs.map((log) => (
+            <div key={log.id} className="p-4 space-y-2 text-xs">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-mono font-bold text-[11px] px-2 py-0.5 rounded bg-[#F2F4F7] dark:bg-[#0F172A] border border-[#D0D5DD] dark:border-[#334155] text-[#344054] dark:text-slate-300 break-all">
+                  {log.action}
+                </span>
+                <span
+                  className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${
+                    log.status === 'SUCCESS'
+                      ? 'bg-[#ECFDF5] text-[#16A34A] border-[#A7F3D0]'
+                      : log.status === 'SYSTEM_EXEC'
+                      ? 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
+                      : 'bg-[#FEF2F2] text-[#DC2626] border-[#FCA5A5]'
+                  }`}
+                >
+                  {log.status}
+                </span>
+              </div>
+              <p className="text-[#344054] dark:text-slate-300 break-words">{log.details}</p>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[#667085]">
+                <span>
+                  <strong className="text-[#101828] dark:text-white">{log.actor}</strong> ({log.role})
+                </span>
+                <span className="font-mono text-[#2563EB] font-bold">{log.targetId}</span>
+              </div>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] font-mono text-[#98A2B3]">
+                <span>{log.timestamp}</span>
+                <span>{log.ipAddress}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F9FAFB] dark:bg-[#182234] text-[#667085] font-semibold border-b border-[#EAECF0] dark:border-[#334155] text-[11px] uppercase tracking-wider">
               <tr>

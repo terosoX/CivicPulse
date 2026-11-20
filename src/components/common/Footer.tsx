@@ -20,8 +20,8 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-white dark:bg-[#0B1120] text-[#667085] dark:text-[#9CA3AF] border-t border-[#E5E7EB] dark:border-[#374151] py-12 px-4 sm:px-6 lg:px-8 text-left transition-colors">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+    <footer className="bg-white dark:bg-[#0B1120] text-[#667085] dark:text-[#9CA3AF] border-t border-[#E5E7EB] dark:border-[#374151] py-10 sm:py-12 px-4 sm:px-6 lg:px-8 text-left transition-colors pb-safe">
+      <div className="max-w-[1440px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
         <div>
           <div className="flex items-center gap-2 mb-3">
             <div className="w-8 h-8 rounded-lg bg-[#2563EB] text-white flex items-center justify-center font-bold">
@@ -155,57 +155,60 @@ export default function Footer() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto pt-6 border-t border-[#E5E7EB] dark:border-[#374151] flex flex-col sm:flex-row items-center justify-between text-xs text-[#667085] dark:text-[#9CA3AF] gap-4">
+      <div className="max-w-[1440px] mx-auto pt-6 border-t border-[#E5E7EB] dark:border-[#374151] flex flex-col sm:flex-row items-center justify-between text-xs text-[#667085] dark:text-[#9CA3AF] gap-4 text-center sm:text-left">
         <div>
           © 2026 Smart City Municipal Corporation. {t('footer.rights')}
         </div>
-        <div className="flex items-center gap-4">
-          <span
+        <div className="flex flex-wrap items-center justify-center gap-4">
+          <button
+            type="button"
             onClick={() =>
               openInfoModal(
                 t('footer.privacyPolicy'),
                 'CivicPulse protects citizen personal identity and location data.'
               )
             }
-            className="hover:text-slate-300 cursor-pointer"
+            className="hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer min-h-[36px] px-1"
           >
             {t('footer.privacyPolicy')}
-          </span>
-          <span
+          </button>
+          <button
+            type="button"
             onClick={() =>
               openInfoModal(
                 t('footer.termsOfService'),
                 'Citizens agree to submit genuine photos and details.'
               )
             }
-            className="hover:text-slate-300 cursor-pointer"
+            className="hover:text-slate-900 dark:hover:text-slate-200 cursor-pointer min-h-[36px] px-1"
           >
             {t('footer.termsOfService')}
-          </span>
+          </button>
         </div>
       </div>
 
       {/* Info Modal */}
       {modalTitle && (
-        <div className="fixed inset-0 z-[9000] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-3xl p-6 max-w-md w-full shadow-2xl text-left space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
-              <div className="flex items-center gap-2 text-[#2563EB] dark:text-[#60A5FA]">
-                <ShieldCheck className="w-5 h-5" />
-                <h3 className="font-bold text-sm text-[#111827] dark:text-[#F9FAFB]">{modalTitle}</h3>
+        <div className="fixed inset-0 z-[9000] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-t-2xl sm:rounded-3xl p-5 sm:p-6 pb-safe max-w-md w-full shadow-2xl text-left space-y-4">
+            <div className="flex items-center justify-between gap-2 border-b border-[#E5E7EB] dark:border-[#374151] pb-3">
+              <div className="flex items-center gap-2 text-[#2563EB] dark:text-[#60A5FA] min-w-0">
+                <ShieldCheck className="w-5 h-5 shrink-0" />
+                <h3 className="font-bold text-sm text-[#111827] dark:text-[#F9FAFB] truncate">{modalTitle}</h3>
               </div>
               <button
                 onClick={() => setModalTitle(null)}
-                className="p-1 rounded-lg hover:bg-[#F5F7FA] dark:hover:bg-[#1F2937] text-[#667085] dark:text-[#9CA3AF]"
+                aria-label="Close modal"
+                className="w-11 h-11 rounded-xl hover:bg-[#F5F7FA] dark:hover:bg-[#1F2937] text-[#667085] dark:text-[#9CA3AF] flex items-center justify-center shrink-0 cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-[#667085] dark:text-[#9CA3AF] leading-relaxed">{modalContent}</p>
+            <p className="text-xs sm:text-sm text-[#667085] dark:text-[#9CA3AF] leading-relaxed">{modalContent}</p>
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setModalTitle(null)}
-                className="px-4 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs"
+                className="w-full sm:w-auto min-h-[42px] px-5 py-2 rounded-xl bg-[#2563EB] hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
               >
                 Close
               </button>

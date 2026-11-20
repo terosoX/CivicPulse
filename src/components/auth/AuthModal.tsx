@@ -97,10 +97,10 @@ export default function AuthModal({ initialRole = 'citizen', onClose, onSuccess 
         className="bg-white dark:bg-[#111827] w-full max-w-md h-[100dvh] sm:h-auto sm:max-h-[90vh] flex flex-col rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-[#374151] shadow-2xl overflow-hidden relative text-left transition-all"
       >
         {/* Sticky Header */}
-        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-4 border-b border-slate-200 dark:border-[#374151] flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            <h2 id="auth-modal-title" className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="sticky top-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-[#374151] flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 min-w-0">
+            <ShieldCheck className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <h2 id="auth-modal-title" className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
               CivicPulse Identity Portal
             </h2>
           </div>
@@ -115,7 +115,7 @@ export default function AuthModal({ initialRole = 'citizen', onClose, onSuccess 
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto overscroll-contain p-6 space-y-5">
+        <div className="flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6 space-y-4 sm:space-y-5">
           {/* Role Selector Tabs */}
           <div className="flex bg-slate-100 dark:bg-[#1F2937] p-1 rounded-2xl">
             <button
@@ -168,35 +168,35 @@ export default function AuthModal({ initialRole = 'citizen', onClose, onSuccess 
               <button
                 type="button"
                 onClick={() => handleQuickDemo('citizen')}
-                className="px-2 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-colors text-center"
+                className="px-2 py-2 min-h-[36px] rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] transition-colors text-center"
               >
                 1. Citizen
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('admin')}
-                className="px-2 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition-colors text-center"
+                className="px-2 py-2 min-h-[36px] rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10px] transition-colors text-center"
               >
                 2. Admin
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('officer')}
-                className="px-2 py-1.5 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[10px] transition-colors text-center"
+                className="px-2 py-2 min-h-[36px] rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[10px] transition-colors text-center"
               >
                 3. Officer
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('field_worker')}
-                className="px-2 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] transition-colors text-center"
+                className="px-2 py-2 min-h-[36px] rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[10px] transition-colors text-center"
               >
                 4. Field Worker
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemo('super_admin')}
-                className="px-2 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] transition-colors col-span-2 sm:col-span-1 text-center"
+                className="px-2 py-2 min-h-[36px] rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[10px] transition-colors col-span-2 sm:col-span-1 text-center"
               >
                 5. Super Admin
               </button>
@@ -318,12 +318,12 @@ export default function AuthModal({ initialRole = 'citizen', onClose, onSuccess 
         </div>
 
         {/* Sticky Footer */}
-        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-6 py-3.5 border-t border-slate-200 dark:border-[#374151] flex flex-col gap-3">
+        <div className="sticky bottom-0 z-20 shrink-0 bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md px-4 sm:px-6 py-3.5 pb-safe border-t border-slate-200 dark:border-[#374151] flex flex-col gap-3">
           <button
             type="submit"
             form="auth-form"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            className="w-full py-3 min-h-[44px] rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all disabled:opacity-50"
           >
             {loading ? (
               <span>Authenticating...</span>

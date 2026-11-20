@@ -60,13 +60,13 @@ export default function AuditLogsModule({ logs }: AuditLogsModuleProps) {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400">
+            <span className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 shrink-0">
               <FileText className="w-5 h-5" />
             </span>
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Immutable System Audit Logs
             </h2>
           </div>
@@ -77,7 +77,7 @@ export default function AuditLogsModule({ logs }: AuditLogsModuleProps) {
 
         <button
           onClick={handleExportCSV}
-          className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-[#1F2937] dark:hover:bg-slate-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all"
+          className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-[#1F2937] dark:hover:bg-slate-700 text-white font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all shrink-0"
         >
           <Download className="w-4 h-4" />
           Export Audit Trail (CSV)
@@ -111,9 +111,50 @@ export default function AuditLogsModule({ logs }: AuditLogsModuleProps) {
         </div>
       </div>
 
-      {/* Audit Log Table */}
+      {/* Audit Log Mobile Card List + Desktop Table */}
       <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
+          {filteredLogs.length === 0 ? (
+            <div className="text-center py-10 px-4 text-xs text-slate-400">
+              No audit records found.
+            </div>
+          ) : (
+            filteredLogs.map((log) => (
+              <div key={log.id} className="p-4 space-y-2 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 break-words">
+                    {log.action}
+                  </span>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold inline-flex items-center gap-1 shrink-0 ${
+                      log.status === 'Success'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        : log.status === 'Warning'
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                        : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                    }`}
+                  >
+                    {log.status === 'Success' ? <CheckCircle2 className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+                    {log.status}
+                  </span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 break-words">{log.details || '-'}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                  <span>
+                    <strong className="text-slate-800 dark:text-slate-200">{log.adminName}</strong> ({log.adminRole}) • {log.targetEntity}
+                  </span>
+                  <span className="font-mono">{log.ipAddress}</span>
+                </div>
+                <div className="text-[10px] text-slate-400 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  {new Date(log.timestamp).toLocaleString()}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-[#1F2937]/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-[#374151]">
               <tr>

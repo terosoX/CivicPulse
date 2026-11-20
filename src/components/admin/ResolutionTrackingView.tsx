@@ -25,6 +25,7 @@ interface ResolutionTrackingViewProps {
   complaints: Complaint[];
   onRefreshData?: () => void;
   onSelectComplaint?: (c: Complaint) => void;
+  onOpenProgressModal?: (c: Complaint) => void;
 }
 
 const LIFECYCLE_STAGES = [
@@ -41,6 +42,7 @@ export default function ResolutionTrackingView({
   complaints,
   onRefreshData,
   onSelectComplaint,
+  onOpenProgressModal,
 }: ResolutionTrackingViewProps) {
   const [selectedStage, setSelectedStage] = useState('all');
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(
@@ -112,7 +114,51 @@ export default function ResolutionTrackingView({
           Standard Civic Operating Procedure (6-Stage Pipeline)
         </div>
 
-        <div className="overflow-x-auto pb-2">
+        {/* Mobile / Small Tablet Compact Grid Stepper */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 md:hidden">
+          {[
+            { num: 1, title: 'Reported', desc: 'Lodged by citizen' },
+            { num: 2, title: 'AI Verification', desc: 'Local AI triage' },
+            { num: 3, title: 'Dept Assignment', desc: 'Crew dispatched' },
+            { num: 4, title: 'Work in Progress', desc: 'On-site repair' },
+            { num: 5, title: 'Resolved', desc: 'Verified after-image' },
+            { num: 6, title: 'Citizen Feedback', desc: '5-star audit close' },
+          ].map((step, idx) => {
+            const isPassed = idx <= activeStageIdx;
+            const isCurrent = idx === activeStageIdx;
+            return (
+              <div
+                key={idx}
+                className={`p-2.5 rounded-lg border flex items-start gap-2 ${
+                  isCurrent
+                    ? 'border-[#2563EB] bg-[#EFF6FF] dark:bg-[#0F1E36]'
+                    : isPassed
+                    ? 'border-[#EAECF0] dark:border-[#334155] bg-[#F9FAFB] dark:bg-[#0F172A]'
+                    : 'border-[#EAECF0] dark:border-[#334155] opacity-75'
+                }`}
+              >
+                <div
+                  className={`w-6 h-6 shrink-0 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                    isPassed
+                      ? 'bg-[#2563EB] text-white'
+                      : 'bg-white dark:bg-[#1E293B] text-[#98A2B3] border border-[#D0D5DD] dark:border-[#334155]'
+                  }`}
+                >
+                  {isPassed ? <CheckCircle2 className="w-3.5 h-3.5" /> : step.num}
+                </div>
+                <div className="min-w-0">
+                  <div className={`text-[11px] font-bold truncate ${isCurrent ? 'text-[#2563EB]' : 'text-[#101828] dark:text-white'}`}>
+                    {step.title}
+                  </div>
+                  <div className="text-[10px] text-[#667085] leading-tight truncate">{step.desc}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Desktop 6-Stage Horizontal Pipeline */}
+        <div className="hidden md:block overflow-x-auto pb-2">
           <div className="flex items-center justify-between min-w-[700px] relative px-3">
             {/* Connecting Track Line */}
             <div className="absolute left-6 right-6 top-4 h-0.5 bg-[#EAECF0] dark:bg-[#334155] -z-0" />
@@ -221,33 +267,53 @@ export default function ResolutionTrackingView({
 
         {/* Right: Comprehensive Lifecycle Inspection Workspace (8 cols) */}
         {activeComplaint && (
-          <div className="lg:col-span-8 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs p-5 sm:p-6 space-y-6">
+          <div className="lg:col-span-8 min-w-0 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs p-4 sm:p-6 space-y-5 sm:space-y-6">
             {/* Top Info Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#EAECF0] dark:border-[#334155]">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-sm font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded border border-[#BFDBFE]">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs sm:text-sm font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded border border-[#BFDBFE]">
                     {activeComplaint.ticketNumber}
                   </span>
                   <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#ECFDF5] text-[#16A34A] border border-[#A7F3D0]">
                     Current Status: {activeComplaint.status}
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-[#101828] dark:text-white mt-2">
+                <h3 className="text-base font-bold text-[#101828] dark:text-white mt-2 break-words">
                   {activeComplaint.title}
                 </h3>
               </div>
 
-              {/* Certificate Download if resolved */}
-              {(activeComplaint.status === 'Resolved' || activeComplaint.status === 'Closed') && (
-                <button
-                  onClick={() => exportResolutionCertificatePDF(activeComplaint)}
-                  className="px-3.5 py-2 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs self-start sm:self-auto shrink-0"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Resolution Certificate PDF</span>
-                </button>
-              )}
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                {onOpenProgressModal && (
+                  <button
+                    onClick={() => onOpenProgressModal(activeComplaint)}
+                    className="w-full sm:w-auto min-h-[38px] px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Update Stage / Photo</span>
+                  </button>
+                )}
+                {onSelectComplaint && (
+                  <button
+                    onClick={() => onSelectComplaint(activeComplaint)}
+                    className="w-full sm:w-auto min-h-[38px] px-3 py-2 rounded-lg bg-[#F2F4F7] hover:bg-[#EAECF0] dark:bg-[#0F172A] text-[#344054] dark:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Eye className="w-3.5 h-3.5" />
+                    <span>Full Modal</span>
+                  </button>
+                )}
+                {/* Certificate Download if resolved */}
+                {(activeComplaint.status === 'Resolved' || activeComplaint.status === 'Closed') && (
+                  <button
+                    onClick={() => exportResolutionCertificatePDF(activeComplaint)}
+                    className="w-full sm:w-auto min-h-[38px] px-3.5 py-2 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-2xs shrink-0"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Resolution Certificate PDF</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Department & Assigned Officer Metadata */}
@@ -264,7 +330,7 @@ export default function ResolutionTrackingView({
                 <span className="text-[10px] text-[#667085] uppercase tracking-wider block font-semibold">Assigned Officer</span>
                 <span className="font-semibold text-[#101828] dark:text-white flex items-center gap-1 mt-0.5">
                   <UserCheck className="w-3.5 h-3.5 text-[#16A34A]" />
-                  <span>{activeComplaint.officerAssigned || 'Eng. Vikram Sethi'}</span>
+                  <span>{activeComplaint.officerAssigned || 'Pending Assignment'}</span>
                 </span>
               </div>
 
@@ -276,26 +342,67 @@ export default function ResolutionTrackingView({
               </div>
             </div>
 
-            {/* Before / After Evidence Visual Slider */}
+            {/* Before / After Evidence Visual Comparison */}
             <div>
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
                 <span className="text-xs font-bold text-[#101828] dark:text-white uppercase tracking-wider">
                   Field Verification Evidence (Before vs After)
                 </span>
                 <span className="text-[11px] text-[#667085]">
-                  Drag middle handle to compare field repair
+                  {activeComplaint.afterImage
+                    ? 'Drag middle handle to compare field repair'
+                    : 'Completion after-photo will appear once uploaded by field crew'}
                 </span>
               </div>
 
-              <div className="rounded-xl overflow-hidden border border-[#EAECF0] dark:border-[#334155]">
-                <BeforeAfterSlider
-                  beforeImage={activeComplaint.beforeImage || activeComplaint.images[0] || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800'}
-                  afterImage={activeComplaint.afterImage || 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?q=80&w=800'}
-                  beforeLabel="Reported Hazard (Before)"
-                  afterLabel="Municipal Field Repair (After)"
-                  heightClass="h-56 sm:h-72"
-                />
-              </div>
+              {activeComplaint.afterImage ? (
+                <div className="rounded-xl overflow-hidden border border-[#EAECF0] dark:border-[#334155]">
+                  <BeforeAfterSlider
+                    beforeImage={activeComplaint.beforeImage || activeComplaint.images[0] || ''}
+                    afterImage={activeComplaint.afterImage}
+                    beforeLabel="Reported Hazard (Before)"
+                    afterLabel="Municipal Field Repair (After)"
+                    heightClass="h-52 sm:h-72"
+                  />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="rounded-xl overflow-hidden border border-[#EAECF0] dark:border-[#334155] bg-[#F9FAFB] dark:bg-[#0F172A]">
+                    {activeComplaint.beforeImage || activeComplaint.images[0] ? (
+                      <img
+                        src={activeComplaint.beforeImage || activeComplaint.images[0]}
+                        alt="Reported hazard evidence"
+                        className="w-full h-48 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-48 flex items-center justify-center text-xs text-[#667085]">
+                        No citizen photo uploaded
+                      </div>
+                    )}
+                    <div className="px-3 py-1.5 text-[11px] font-semibold text-[#344054] dark:text-slate-300 border-t border-[#EAECF0] dark:border-[#334155]">
+                      Reported Evidence (Before)
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-dashed border-[#D0D5DD] dark:border-[#334155] bg-[#F9FAFB] dark:bg-[#0F172A] h-full min-h-[192px] flex flex-col items-center justify-center p-4 text-center space-y-2.5">
+                    <Camera className="w-6 h-6 text-[#667085]" />
+                    <div className="text-xs font-semibold text-[#101828] dark:text-white">
+                      Awaiting Field Resolution Photo
+                    </div>
+                    <p className="text-[11px] text-[#667085] max-w-xs">
+                      Field crews can upload completion evidence to unlock Before/After comparison.
+                    </p>
+                    {onOpenProgressModal && (
+                      <button
+                        type="button"
+                        onClick={() => onOpenProgressModal(activeComplaint)}
+                        className="px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold"
+                      >
+                        Upload Completion Photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Timeline of Actions & Timestamps */}
@@ -306,20 +413,20 @@ export default function ResolutionTrackingView({
 
               <div className="border border-[#EAECF0] dark:border-[#334155] rounded-xl overflow-hidden divide-y divide-[#F2F4F7] dark:divide-[#1E293B] bg-white dark:bg-[#0F172A]">
                 {activeComplaint.statusHistory?.map((step, idx) => (
-                  <div key={idx} className="p-3.5 flex items-start justify-between gap-4 text-xs">
+                  <div key={idx} className="p-3.5 flex flex-col sm:flex-row sm:items-start justify-between gap-1.5 sm:gap-4 text-xs">
                     <div>
-                      <div className="flex items-center gap-2 font-semibold text-[#101828] dark:text-white">
-                        <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+                      <div className="flex flex-wrap items-center gap-2 font-semibold text-[#101828] dark:text-white">
+                        <span className="w-2 h-2 rounded-full bg-[#2563EB] shrink-0" />
                         <span>{step.status}</span>
                         <span className="text-[11px] font-normal text-[#667085]">by {step.updatedBy}</span>
                       </div>
                       {step.notes && (
-                        <p className="text-[11px] text-[#475467] dark:text-slate-300 mt-1 pl-4 leading-relaxed">
+                        <p className="text-[11px] text-[#475467] dark:text-slate-300 mt-1 pl-4 leading-relaxed break-words">
                           "{step.notes}"
                         </p>
                       )}
                     </div>
-                    <span className="text-[10px] font-mono text-[#98A2B3] shrink-0">
+                    <span className="text-[10px] font-mono text-[#98A2B3] shrink-0 pl-4 sm:pl-0">
                       {formatDate(step.timestamp)}
                     </span>
                   </div>

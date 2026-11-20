@@ -152,15 +152,15 @@ export default function CivicAssistantView({
   const currentPresets = lang === 'hi' ? PRESET_QUERIES_HI : PRESET_QUERIES_EN;
 
   return (
-    <div className="space-y-4 text-left max-w-5xl mx-auto flex flex-col h-[calc(100vh-8.5rem)]">
+    <div className="space-y-3 sm:space-y-4 text-left max-w-5xl mx-auto flex flex-col h-[calc(100dvh-8.5rem)] min-h-[460px]">
       {/* Top Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#EAECF0] dark:border-[#1E293B] shrink-0">
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold text-[#101828] dark:text-white tracking-tight">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-lg sm:text-xl font-bold text-[#101828] dark:text-white tracking-tight">
               Civic Intelligence Assistant
             </h2>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#14B8A6]/10 text-[#0D9488] border border-[#99F6E4]">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#14B8A6]/10 text-[#0D9488] border border-[#99F6E4] whitespace-nowrap">
               Bilingual • EN / हिन्दी
             </span>
           </div>
@@ -169,11 +169,11 @@ export default function CivicAssistantView({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {/* Language Toggle */}
           <button
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-            className="px-2.5 py-1.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="min-h-[36px] px-3 py-1.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs font-semibold text-[#344054] dark:text-slate-300 hover:bg-[#F9FAFB] flex items-center gap-1.5 transition-colors shadow-2xs"
           >
             <Languages className="w-3.5 h-3.5 text-[#2563EB]" />
             <span>{lang === 'en' ? 'हिन्दी में पूछें' : 'Switch to English'}</span>
@@ -181,7 +181,7 @@ export default function CivicAssistantView({
 
           <button
             onClick={handleClearHistory}
-            className="px-2.5 py-1.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs font-semibold text-[#667085] hover:text-[#DC2626] hover:bg-[#FEF2F2] flex items-center gap-1.5 transition-colors shadow-2xs"
+            className="min-h-[36px] px-3 py-1.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs font-semibold text-[#667085] hover:text-[#DC2626] hover:bg-[#FEF2F2] flex items-center gap-1.5 transition-colors shadow-2xs"
             title="Clear Chat History"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -268,18 +268,18 @@ export default function CivicAssistantView({
         </div>
 
         {/* Preset Prompt Suggestions */}
-        <div className="p-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#EAECF0] dark:border-[#374151] shrink-0">
-          <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider mb-2 flex items-center gap-1">
+        <div className="p-2.5 sm:p-3 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#EAECF0] dark:border-[#374151] shrink-0">
+          <div className="text-[10px] font-bold text-[#667085] uppercase tracking-wider mb-1.5 sm:mb-2 flex items-center gap-1">
             <Sparkles className="w-3 h-3 text-[#2563EB]" />
             <span>Suggested Municipal Intelligence Queries</span>
           </div>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex sm:flex-wrap gap-1.5 overflow-x-auto no-scrollbar pb-0.5 sm:pb-0">
             {currentPresets.map((q, idx) => (
               <button
                 key={idx}
                 onClick={() => handleSend(q)}
                 disabled={loading}
-                className="px-2.5 py-1 rounded-lg text-xs font-medium bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-[#344054] dark:text-slate-200 hover:border-[#2563EB] hover:text-[#2563EB] transition-colors shadow-2xs"
+                className="shrink-0 sm:shrink whitespace-nowrap sm:whitespace-normal px-2.5 py-1.5 sm:py-1 rounded-lg text-xs font-medium bg-white dark:bg-[#111827] border border-[#D0D5DD] dark:border-[#374151] text-[#344054] dark:text-slate-200 hover:border-[#2563EB] hover:text-[#2563EB] transition-colors shadow-2xs"
               >
                 {q}
               </button>
@@ -288,7 +288,7 @@ export default function CivicAssistantView({
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 bg-white dark:bg-[#111827] border-t border-[#EAECF0] dark:border-[#374151] shrink-0">
+        <div className="p-2.5 sm:p-3 pb-safe bg-white dark:bg-[#111827] border-t border-[#EAECF0] dark:border-[#374151] shrink-0">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -306,12 +306,12 @@ export default function CivicAssistantView({
                   : 'Ask about ticket status, ward infrastructure, SLA policies, or dispatch status...'
               }
               disabled={loading}
-              className="flex-1 px-4 py-2.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white placeholder-[#98A2B3] focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
+              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white placeholder-[#98A2B3] focus:ring-2 focus:ring-[#2563EB] focus:outline-none"
             />
             <button
               type="submit"
               disabled={loading || !inputValue.trim()}
-              className="px-4 py-2.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-40 transition-colors flex items-center gap-1.5 shrink-0 shadow-xs"
+              className="min-h-[40px] px-3.5 sm:px-4 py-2.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold disabled:opacity-40 transition-colors flex items-center gap-1.5 shrink-0 shadow-xs"
             >
               <Send className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Send Query</span>

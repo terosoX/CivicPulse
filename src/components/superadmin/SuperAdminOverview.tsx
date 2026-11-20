@@ -64,41 +64,41 @@ export default function SuperAdminOverview({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Executive Command Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-6 sm:p-8 text-white shadow-xl border border-indigo-900/50">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 p-4 sm:p-6 lg:p-8 text-white shadow-xl border border-indigo-900/50">
         <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-2 max-w-2xl">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center gap-1.5">
-                <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 sm:gap-6">
+          <div className="space-y-2 max-w-2xl min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30 flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
                 CENTRAL MUNICIPAL CONTROL ROOM
               </span>
-              <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+              <span className="px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0" />
                 SYSTEM ONLINE
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+            <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-white">
               Super Admin Executive Platform
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
               Real-time monitoring of municipal infrastructure, department SLA performance, GIS spatial coverage, and platform health across all urban wards.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 shrink-0">
             <button
               onClick={onOpenBroadcast}
-              className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
             >
-              <Bell className="w-4 h-4 animate-bounce" />
+              <Bell className="w-4 h-4 animate-bounce shrink-0" />
               Send Emergency Broadcast
             </button>
             <button
               onClick={() => onNavigateTab('reports')}
-              className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center gap-2 transition-all"
+              className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 shrink-0" />
               Export Executive Report
             </button>
           </div>
@@ -106,7 +106,7 @@ export default function SuperAdminOverview({
       </div>
 
       {/* Key Metric KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 min-[400px]:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 tabular-nums">
         {/* Total Users */}
         <div
           onClick={() => onNavigateTab('users')}
@@ -215,23 +215,23 @@ export default function SuperAdminOverview({
       {/* Main Analytics Charts Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Monthly Trend Area Chart */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Activity className="w-4 h-4 text-blue-500" />
-                6-Month Issue Lodgement vs Resolution Trend
+        <div className="lg:col-span-2 min-w-0 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-5 sm:mb-6">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-blue-500 shrink-0" />
+                <span>6-Month Issue Lodgement vs Resolution Trend</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Municipal ticket velocity & field closure efficiency
               </p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300">
+            <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 shrink-0">
               Live Feed
             </span>
           </div>
 
-          <div className="h-64 w-full">
+          <div className="h-56 sm:h-64 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats?.monthlyTrend || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
@@ -264,7 +264,7 @@ export default function SuperAdminOverview({
         </div>
 
         {/* Category Share Breakdown */}
-        <div className="bg-white dark:bg-[#111827] p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm flex flex-col justify-between">
+        <div className="min-w-0 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#374151] shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-amber-500" />
@@ -319,18 +319,18 @@ export default function SuperAdminOverview({
       {/* Infrastructure Health & Recent Audit Trail Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* System Infrastructure Health Card */}
-        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-indigo-500" />
-              Infrastructure & AI Status
+        <div className="min-w-0 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Cpu className="w-4 h-4 text-indigo-500 shrink-0" />
+              <span>Infrastructure & AI Status</span>
             </h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
               HEALTHY
             </span>
           </div>
 
-          <div className="space-y-3.5 text-xs">
+          <div className="space-y-3.5 text-xs tabular-nums">
             {/* CPU */}
             <div>
               <div className="flex justify-between font-semibold mb-1">
@@ -373,12 +373,12 @@ export default function SuperAdminOverview({
         </div>
 
         {/* Live System Audit Stream */}
-        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <FileText className="w-4 h-4 text-amber-500" />
-                Live System Audit Stream
+        <div className="lg:col-span-2 min-w-0 bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="min-w-0">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <FileText className="w-4 h-4 text-amber-500 shrink-0" />
+                <span>Live System Audit Stream</span>
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Immutable security logs tracking administrative & platform actions
@@ -386,7 +386,7 @@ export default function SuperAdminOverview({
             </div>
             <button
               onClick={() => onNavigateTab('audit')}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline py-1 shrink-0"
             >
               View All Logs →
             </button>
@@ -396,11 +396,11 @@ export default function SuperAdminOverview({
             {auditLogs.slice(0, 4).map((log) => (
               <div
                 key={log.id}
-                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex items-start justify-between text-xs gap-3"
+                className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60 flex flex-col sm:flex-row sm:items-start justify-between text-xs gap-2 sm:gap-3"
               >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-900 dark:text-white">{log.action}</span>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-bold text-slate-900 dark:text-white break-words">{log.action}</span>
                     <span
                       className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                         log.status === 'Success'
@@ -411,13 +411,13 @@ export default function SuperAdminOverview({
                       {log.status}
                     </span>
                   </div>
-                  <p className="text-slate-600 dark:text-slate-300">{log.details}</p>
-                  <div className="text-[10px] text-slate-400 flex items-center gap-3 pt-0.5">
+                  <p className="text-slate-600 dark:text-slate-300 break-words">{log.details}</p>
+                  <div className="text-[10px] text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-0.5 pt-0.5">
                     <span>By: {log.adminName} ({log.adminRole})</span>
                     <span>IP: {log.ipAddress}</span>
                   </div>
                 </div>
-                <div className="text-[10px] font-medium text-slate-400 whitespace-nowrap flex items-center gap-1">
+                <div className="text-[10px] font-medium text-slate-400 whitespace-nowrap flex items-center gap-1 shrink-0">
                   <Clock className="w-3 h-3" />
                   {new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </div>

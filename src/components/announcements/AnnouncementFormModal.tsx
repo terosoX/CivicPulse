@@ -151,20 +151,20 @@ export default function AnnouncementFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[9990] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn">
-      <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden my-auto text-left relative max-h-[92vh] flex flex-col">
+    <div className="fixed inset-0 z-[9990] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 overflow-hidden animate-fadeIn">
+      <div className="bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] rounded-t-2xl sm:rounded-3xl max-w-3xl w-full shadow-2xl overflow-hidden text-left relative h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col">
         
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between bg-[#F9FAFB] dark:bg-[#1F2937] shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-600 text-white font-bold">
+        <div className="p-4 sm:p-6 border-b border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between gap-3 bg-[#F9FAFB] dark:bg-[#1F2937] shrink-0">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="p-2 rounded-xl bg-blue-600 text-white font-bold shrink-0">
               <Megaphone className="w-5 h-5" />
             </span>
-            <div>
-              <h2 className="font-bold text-base text-slate-900 dark:text-white">
+            <div className="min-w-0">
+              <h2 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white truncate">
                 {initialData ? (i18n.language === 'hi' ? 'नगर सूचना संपादित करें' : 'Edit Municipal Notice') : (i18n.language === 'hi' ? 'नगर सूचना बनाएं व प्रकाशित करें' : 'Create & Publish Municipal Notice')}
               </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
                 {i18n.language === 'hi' ? 'आधिकारिक राजपत्र संचार व आपातकालीन बुलेटिन' : 'Official Gazette Communications & Emergency Bulletins'}
               </p>
             </div>
@@ -172,14 +172,15 @@ export default function AnnouncementFormModal({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-[#374151] text-slate-500 transition-colors"
+            aria-label="Close modal"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full hover:bg-slate-200 dark:hover:bg-[#374151] text-slate-500 flex items-center justify-center transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-5 flex-1 text-xs">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 pb-safe overflow-y-auto overscroll-contain space-y-5 flex-1 text-xs">
           {errorMsg && (
             <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 text-xs font-semibold">
               {errorMsg}
@@ -312,7 +313,7 @@ export default function AnnouncementFormModal({
             <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
               {i18n.language === 'hi' ? 'बैनर छवि या कस्टम URL' : 'Banner Image Presets or Custom URL'}
             </label>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-2">
               {PRESET_BANNERS.map((b, i) => (
                 <div
                   key={i}
@@ -394,15 +395,15 @@ export default function AnnouncementFormModal({
           </div>
 
           {/* Flags Checkboxes */}
-          <div className="flex items-center gap-6 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700">
             <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800 dark:text-slate-200">
               <input
                 type="checkbox"
                 checked={isPinned}
                 onChange={(e) => setIsPinned(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 shrink-0"
               />
-              📌 {i18n.language === 'hi' ? 'शीर्ष पर पिन करें' : 'Pin Announcement at Top'}
+              <span>📌 {i18n.language === 'hi' ? 'शीर्ष पर पिन करें' : 'Pin Announcement at Top'}</span>
             </label>
 
             <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-800 dark:text-slate-200">
@@ -410,9 +411,9 @@ export default function AnnouncementFormModal({
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500"
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 shrink-0"
               />
-              ⭐ {i18n.language === 'hi' ? 'मुख्य बैनर के रूप में सेट करें' : 'Set as Featured Hero Banner'}
+              <span>⭐ {i18n.language === 'hi' ? 'मुख्य बैनर के रूप में सेट करें' : 'Set as Featured Hero Banner'}</span>
             </label>
           </div>
 
@@ -421,18 +422,18 @@ export default function AnnouncementFormModal({
             <label className="block font-bold text-slate-700 dark:text-slate-300">
               {i18n.language === 'hi' ? 'आधिकारिक पीडीएफ / दस्तावेज संलग्नक' : 'Official PDF / Document Attachments'}
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <input
                 type="text"
                 value={newAttName}
                 onChange={(e) => setNewAttName(e.target.value)}
                 placeholder={i18n.language === 'hi' ? 'दस्तावेज़ का नाम (उदा. Map_2026.pdf)' : 'Document name (e.g., Diversion_Map_2026.pdf)'}
-                className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
+                className="flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs"
               />
               <button
                 type="button"
                 onClick={handleAddAttachment}
-                className="px-3.5 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center gap-1 shrink-0"
+                className="px-4 py-2.5 min-h-[40px] rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center gap-1 shrink-0"
               >
                 <Plus className="w-3.5 h-3.5" /> {i18n.language === 'hi' ? 'जोड़ें' : 'Add Document'}
               </button>
@@ -464,18 +465,18 @@ export default function AnnouncementFormModal({
           </div>
 
           {/* Submit Action */}
-          <div className="pt-4 flex items-center justify-end gap-3 border-t border-slate-200 dark:border-slate-800">
+          <div className="pt-4 flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2.5 sm:gap-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="w-full sm:w-auto px-4 py-2.5 min-h-[42px] rounded-xl text-slate-600 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               {i18n.language === 'hi' ? 'रद्द करें' : 'Cancel'}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md flex items-center gap-2"
+              className="w-full sm:w-auto px-6 py-2.5 min-h-[42px] rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md flex items-center justify-center gap-2"
             >
               {loading ? (
                 <span>{i18n.language === 'hi' ? 'प्रकाशित हो रहा है...' : 'Publishing...'}</span>

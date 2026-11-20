@@ -172,10 +172,11 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
             setIsMinimized(false);
           }}
           aria-label="Open Municipal Support Assistant"
-          className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-3 py-2 bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-lg shadow-md border border-slate-700 text-xs font-medium cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          className="fixed bottom-3 right-3 sm:bottom-5 sm:right-5 z-40 flex items-center gap-2 px-3.5 py-2.5 min-h-[44px] bg-slate-900 hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 text-white rounded-xl shadow-lg border border-slate-700 text-xs font-semibold cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
           <Bot className="w-4 h-4 text-blue-400" />
-          <span>Municipal Assistant</span>
+          <span className="hidden min-[400px]:inline">Municipal Assistant</span>
+          <span className="min-[400px]:hidden">Assistant</span>
         </button>
       )}
 
@@ -183,45 +184,48 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
       {isOpen && (
         <aside
           aria-label="CivicPulse Assistant Window"
-          className={`fixed bottom-5 right-5 z-40 w-[92vw] sm:w-[380px] bg-white dark:bg-[#111827] rounded-xl border border-[#E5E7EB] dark:border-[#374151] shadow-xl flex flex-col overflow-hidden transition-all duration-200 ${
-            isMinimized ? 'h-14' : 'h-[500px] max-h-[80vh]'
+          className={`fixed bottom-3 right-3 left-3 sm:left-auto sm:bottom-5 sm:right-5 z-40 sm:w-[380px] bg-white dark:bg-[#111827] rounded-xl border border-[#E5E7EB] dark:border-[#374151] shadow-2xl flex flex-col overflow-hidden transition-all duration-200 ${
+            isMinimized ? 'h-14' : 'h-[min(520px,82dvh)] max-h-[82dvh]'
           }`}
         >
           {/* Header */}
-          <div className="bg-[#111827] dark:bg-[#080E1A] text-white p-3 px-4 flex items-center justify-between shrink-0 border-b border-[#1F2937] dark:border-[#374151]">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-blue-700 text-white flex items-center justify-center">
+          <div className="bg-[#111827] dark:bg-[#080E1A] text-white p-2.5 px-3.5 sm:px-4 flex items-center justify-between shrink-0 border-b border-[#1F2937] dark:border-[#374151]">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-md bg-blue-700 text-white flex items-center justify-center shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <div>
-                <h3 className="font-semibold text-xs text-white leading-tight">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-xs text-white leading-tight truncate">
                   CivicPulse Assistant
                 </h3>
-                <p className="text-[10px] text-slate-400 leading-tight">
+                <p className="text-[10px] text-slate-400 leading-tight truncate">
                   Municipal Advisory System
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={clearChat}
                 title="Clear Chat"
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label="Clear chat"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               >
-                <Trash2 className="w-3.5 h-3.5" />
+                <Trash2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
                 title={isMinimized ? 'Expand' : 'Minimize'}
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label={isMinimized ? 'Expand chat' : 'Minimize chat'}
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               >
-                {isMinimized ? <Maximize2 className="w-3.5 h-3.5" /> : <Minimize2 className="w-3.5 h-3.5" />}
+                {isMinimized ? <Maximize2 className="w-4 h-4" /> : <Minimize2 className="w-4 h-4" />}
               </button>
               <button
                 onClick={() => setIsOpen(false)}
                 title="Close"
-                className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                aria-label="Close assistant"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -237,12 +241,12 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
               </div>
 
               {/* Quick Suggestions Bar */}
-              <div className="p-2 border-b border-[#E5E7EB] dark:border-[#374151] overflow-x-auto shrink-0 flex gap-1.5 text-[11px] bg-white dark:bg-[#111827]">
+              <div className="p-2 border-b border-[#E5E7EB] dark:border-[#374151] overflow-x-auto no-scrollbar shrink-0 flex gap-1.5 text-[11px] bg-white dark:bg-[#111827]">
                 {QUICK_SUGGESTIONS.map((chip, i) => (
                   <button
                     key={i}
                     onClick={() => handleSend(chip)}
-                    className="px-2 py-1 rounded bg-[#F9FAFB] dark:bg-[#1F2937] hover:bg-[#E5E7EB] dark:hover:bg-[#374151] text-[#111827] dark:text-[#D1D5DB] border border-[#E5E7EB] dark:border-[#374151] whitespace-nowrap transition-colors"
+                    className="px-2.5 py-1.5 min-h-[32px] rounded bg-[#F9FAFB] dark:bg-[#1F2937] hover:bg-[#E5E7EB] dark:hover:bg-[#374151] text-[#111827] dark:text-[#D1D5DB] border border-[#E5E7EB] dark:border-[#374151] whitespace-nowrap transition-colors"
                   >
                     {chip}
                   </button>
@@ -250,7 +254,7 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
               </div>
 
               {/* Conversation Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white dark:bg-[#111827]">
+              <div className="flex-1 overflow-y-auto p-3.5 sm:p-4 space-y-3 bg-white dark:bg-[#111827]">
                 {messages.map((m) => (
                   <div
                     key={m.id}
@@ -281,7 +285,7 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
               </div>
 
               {/* Input Form */}
-              <div className="p-2.5 bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] shrink-0">
+              <div className="p-2.5 pb-safe bg-[#F9FAFB] dark:bg-[#1F2937] border-t border-[#E5E7EB] dark:border-[#374151] shrink-0">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -294,15 +298,15 @@ export default function ChatbotWidget({ currentUser }: ChatbotWidgetProps) {
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     placeholder="Ask about ticket, category, or helpline..."
-                    className="flex-1 px-3 py-1.5 rounded-md border border-[#E5E7EB] dark:border-[#374151] bg-white dark:bg-[#111827] text-xs text-[#111827] dark:text-[#F9FAFB] placeholder:text-[#667085] dark:placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
+                    className="flex-1 min-w-0 px-3 py-2 rounded-md border border-[#E5E7EB] dark:border-[#374151] bg-white dark:bg-[#111827] text-sm sm:text-xs text-[#111827] dark:text-[#F9FAFB] placeholder:text-[#667085] dark:placeholder:text-[#9CA3AF] focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                   />
                   <button
                     type="submit"
                     disabled={!inputMessage.trim() || loading}
-                    className="p-2 rounded-md bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white transition-colors cursor-pointer"
+                    className="w-10 h-10 min-w-[40px] min-h-[40px] rounded-md bg-blue-700 hover:bg-blue-800 disabled:opacity-40 text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
                     aria-label="Send query"
                   >
-                    <Send className="w-3.5 h-3.5" />
+                    <Send className="w-4 h-4" />
                   </button>
                 </form>
               </div>

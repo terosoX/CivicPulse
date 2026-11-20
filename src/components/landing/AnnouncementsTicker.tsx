@@ -28,8 +28,8 @@ export default function AnnouncementsTicker({ announcements, onViewAllClick }: A
           : 'bg-[#F9FAFB] dark:bg-[#111827] border-[#E5E7EB] dark:border-[#374151] text-slate-700 dark:text-slate-300'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0 w-full sm:w-auto flex-1">
           {/* Official Badge */}
           <span
             className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider shrink-0 ${
@@ -43,7 +43,7 @@ export default function AnnouncementsTicker({ announcements, onViewAllClick }: A
           </span>
 
           {/* Bulletin Text */}
-          <div className="truncate">
+          <div className="truncate min-w-0 flex-1">
             <span className="font-semibold text-slate-900 dark:text-white mr-1.5">
               {activeNotice.title}
             </span>
@@ -54,13 +54,13 @@ export default function AnnouncementsTicker({ announcements, onViewAllClick }: A
         </div>
 
         {/* Action Link & Date */}
-        <div className="flex items-center gap-3 shrink-0 text-[11px] self-end sm:self-center">
+        <div className="flex items-center gap-3 shrink-0 text-[11px] self-start sm:self-center">
           <span className="text-slate-400 dark:text-slate-500 hidden lg:inline">
             {formatDate(activeNotice.publishedAt || activeNotice.createdAt)}
           </span>
           <button
             onClick={onViewAllClick}
-            className={`font-semibold inline-flex items-center gap-1 hover:underline cursor-pointer ${
+            className={`min-h-[28px] font-semibold inline-flex items-center gap-1 hover:underline cursor-pointer whitespace-nowrap ${
               isEmergency ? 'text-rose-700 dark:text-rose-300' : 'text-blue-700 dark:text-blue-400'
             }`}
           >

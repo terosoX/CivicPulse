@@ -113,27 +113,35 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
-      className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200"
+      className="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-hidden animate-in fade-in duration-200"
     >
-      <div className="bg-white dark:bg-[#111827] w-full max-w-lg rounded-3xl border-2 border-red-500/50 shadow-2xl overflow-hidden relative transition-all my-8">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-red-600 to-rose-700 p-6 text-white flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-2xl animate-pulse">
-              <ShieldAlert className="w-6 h-6 text-white" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Emergency SOS Report"
+        className="bg-white dark:bg-[#111827] w-full max-w-lg h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col rounded-t-3xl sm:rounded-3xl border-2 border-red-500/50 shadow-2xl overflow-hidden relative transition-all"
+      >
+        {/* Sticky Header */}
+        <div className="bg-gradient-to-r from-red-600 to-rose-700 p-4 sm:p-6 text-white flex items-center justify-between gap-3 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="p-2 sm:p-2.5 bg-white/20 backdrop-blur-md rounded-2xl animate-pulse shrink-0">
+              <ShieldAlert className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div>
-              <h2 className="text-xl font-extrabold tracking-tight">EMERGENCY SOS REPORT</h2>
-              <p className="text-xs text-red-100 font-medium">Direct 24/7 Municipal Rapid Response Pipeline</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-xl font-extrabold tracking-tight truncate">EMERGENCY SOS REPORT</h2>
+              <p className="text-[11px] sm:text-xs text-red-100 font-medium truncate">Direct 24/7 Municipal Rapid Response Pipeline</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition-colors"
+            aria-label="Close SOS modal"
+            className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        <div className="flex-1 overflow-y-auto overscroll-contain pb-safe">
 
         {successComplaint ? (
           <div className="p-8 text-center space-y-4">
@@ -168,7 +176,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 sm:space-y-5">
             {errorMsg && (
               <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-xs font-semibold text-red-700 dark:text-red-300">
                 {errorMsg}
@@ -179,7 +187,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                 Select Emergency Incident Type
               </label>
-              <div className="grid grid-cols-2 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {categories.map((cat) => {
                   const Icon = cat.icon;
                   const isSelected = selectedCategory === cat.id;
@@ -188,7 +196,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
                       key={cat.id}
                       type="button"
                       onClick={() => setSelectedCategory(cat.id as any)}
-                      className={`p-3 rounded-2xl border-2 flex items-center gap-3 transition-all text-left ${
+                      className={`p-3 min-h-[44px] rounded-2xl border-2 flex items-center gap-3 transition-all text-left ${
                         isSelected
                           ? `${cat.color} font-bold shadow-md ring-2 ring-offset-1 ring-red-500`
                           : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 text-slate-700 dark:text-slate-300'
@@ -205,14 +213,14 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
             {/* GPS Location Banner */}
             <div className="p-3.5 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-2xl flex items-center gap-3 text-xs text-red-900 dark:text-red-200">
               <MapPin className="w-5 h-5 text-red-600 shrink-0" />
-              <div className="truncate">
+              <div className="min-w-0 flex-1">
                 <span className="font-bold block">Captured GPS Coordinates:</span>
                 <span className="truncate block opacity-90">{location.address}</span>
               </div>
             </div>
 
             {/* Contact Details */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Your Name</label>
                 <input
@@ -220,7 +228,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
                   value={citizenName}
                   onChange={(e) => setCitizenName(e.target.value)}
                   placeholder="Citizen Name"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm sm:text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
               <div>
@@ -230,7 +238,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="+1 555-XXXX"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-sm sm:text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
             </div>
@@ -266,7 +274,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-sm shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 transition-all"
+              className="w-full py-3.5 min-h-[44px] rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white font-extrabold text-sm shadow-xl shadow-red-600/30 flex items-center justify-center gap-2 transition-all"
             >
               {loading ? (
                 <span>DISPATCHING SOS SIGNAL...</span>
@@ -279,6 +287,7 @@ export default function EmergencySOSModal({ onClose, onSubmitted }: EmergencySOS
             </button>
           </form>
         )}
+        </div>
       </div>
     </div>
   );

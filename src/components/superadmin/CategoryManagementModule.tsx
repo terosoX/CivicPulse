@@ -32,13 +32,13 @@ export default function CategoryManagementModule({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400">
+            <span className="p-2 rounded-xl bg-purple-50 dark:bg-purple-950 text-purple-600 dark:text-purple-400 shrink-0">
               <Tag className="w-5 h-5" />
             </span>
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Complaint Taxonomy & SLA Rules
             </h2>
           </div>
@@ -129,13 +129,17 @@ export default function CategoryManagementModule({
 
       {/* Edit Modal */}
       {editingCategory && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in">
-            <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#374151] pb-3">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 overflow-hidden">
+          <div className="bg-white dark:bg-[#111827] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto overscroll-contain p-5 sm:p-6 pb-safe space-y-4 animate-scale-in">
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#374151] pb-3 gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white truncate">
                 Edit SLA & Routing Rules ({editingCategory.name})
               </h3>
-              <button onClick={() => setEditingCategory(null)} className="p-1 rounded-lg text-slate-400">
+              <button
+                onClick={() => setEditingCategory(null)}
+                aria-label="Close modal"
+                className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 shrink-0"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -175,30 +179,30 @@ export default function CategoryManagementModule({
                 </select>
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-start gap-2.5 pt-2">
                 <input
                   type="checkbox"
                   id="autoTriageCheck"
                   checked={editingCategory.autoTriage}
                   onChange={(e) => setEditingCategory({ ...editingCategory, autoTriage: e.target.checked })}
-                  className="w-4 h-4 rounded text-purple-600"
+                  className="w-4 h-4 rounded text-purple-600 mt-0.5 shrink-0"
                 />
-                <label htmlFor="autoTriageCheck" className="font-bold text-slate-700 dark:text-slate-300">
+                <label htmlFor="autoTriageCheck" className="font-bold text-slate-700 dark:text-slate-300 leading-snug">
                   Enable CivicPulse AI Auto-Classification & Triage for this Category
                 </label>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              <div className="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingCategory(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
+                  className="w-full sm:w-auto px-4 py-2.5 min-h-[40px] rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold"
+                  className="w-full sm:w-auto px-4 py-2.5 min-h-[40px] rounded-xl bg-purple-600 text-white font-bold"
                 >
                   Save Rules
                 </button>

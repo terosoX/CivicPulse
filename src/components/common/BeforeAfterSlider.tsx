@@ -63,13 +63,13 @@ export default function BeforeAfterSlider({
   return (
     <div className="space-y-2">
       {/* View Toggle Bar */}
-      <div className="flex items-center justify-between text-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
         <div className="flex items-center gap-2 font-bold text-slate-700 dark:text-slate-300">
-          <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <ArrowLeftRight className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
           <span>Field Verification Image Comparison</span>
         </div>
 
-        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
           <button
             type="button"
             onClick={() => setViewMode('slider')}

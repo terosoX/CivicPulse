@@ -77,9 +77,14 @@ export interface AIAnalysisResult {
   isFakeOrSpam: boolean;
   duplicateFound: boolean;
   duplicateComplaintId?: string;
+  duplicateReason?: string;
   summary: string;
   keyKeywords: string[];
   priorityConfidence?: number;
+  classificationMethod?: 'rule-based-bilingual-ontology' | 'hybrid-ml-adapter';
+  trainedModelLoaded?: boolean;
+  visionAdapter?: string;
+  matchedRuleCount?: number;
 }
 
 export interface Complaint {

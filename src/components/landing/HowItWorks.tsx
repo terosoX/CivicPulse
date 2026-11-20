@@ -40,14 +40,14 @@ export default function HowItWorks() {
 
   return (
     <section className="py-12 sm:py-16 bg-white dark:bg-[#0B1120] border-b border-[#E5E7EB] dark:border-[#374151] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto mb-10">
+        <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
           <div className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1">
             Grievance Redressal Lifecycle
           </div>
-          <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h2 className="fluid-section-title font-bold text-slate-900 dark:text-white">
             {t('landing.howItWorks')}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
@@ -56,7 +56,7 @@ export default function HowItWorks() {
         </div>
 
         {/* 5-Step Process Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4">
           {STEPS.map((s, idx) => {
             const Icon = s.icon;
             return (

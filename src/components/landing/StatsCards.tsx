@@ -60,22 +60,22 @@ export default function StatsCards({ stats }: StatsCardsProps) {
 
   return (
     <section aria-label="City Grievance Statistics" className="py-8 bg-[#F5F7FA] dark:bg-[#0B1120] border-b border-[#E5E7EB] dark:border-[#374151] transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 min-[360px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           {metrics.map((m, idx) => {
             const Icon = m.icon;
             return (
               <div
                 key={idx}
-                className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs"
+                className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs min-w-0"
               >
-                <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center justify-between mb-2 gap-1.5">
                   <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
                     {m.label}
                   </span>
                   <Icon className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" />
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+                <div className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight tabular-nums">
                   {m.value}
                 </div>
                 <div className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 truncate">

@@ -122,7 +122,7 @@ export default function CitizensManagementView({
       </div>
 
       {/* 4 Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 tabular-nums">
         <div className="p-4 rounded-xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs">
           <div className="flex items-center justify-between text-[#667085] dark:text-[#9CA3AF]">
             <span className="text-xs font-semibold">Registered Citizens</span>
@@ -203,9 +203,55 @@ export default function CitizensManagementView({
         </select>
       </div>
 
-      {/* Citizens Table */}
+      {/* Citizens Mobile Card List + Desktop Table */}
       <div className="rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-[#EAECF0] dark:divide-[#334155]">
+          {filteredCitizens.map((c) => (
+            <div key={c.id} className="p-4 space-y-2.5 text-xs">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  {brokenAvatars[c.id] ? (
+                    <div className="w-9 h-9 rounded-full bg-[#2563EB]/10 dark:bg-blue-950/60 text-[#2563EB] dark:text-[#60A5FA] font-bold text-xs flex items-center justify-center border border-[#BFDBFE] dark:border-blue-900 shrink-0">
+                      {c.name.slice(0, 2).toUpperCase()}
+                    </div>
+                  ) : (
+                    <img
+                      src={c.avatar}
+                      alt={c.name}
+                      onError={() => setBrokenAvatars((prev) => ({ ...prev, [c.id]: true }))}
+                      className="w-9 h-9 rounded-full object-cover border border-[#E5E7EB] dark:border-[#374151] shrink-0"
+                    />
+                  )}
+                  <div className="min-w-0">
+                    <div className="font-bold text-[#111827] dark:text-[#F9FAFB] truncate">{c.name}</div>
+                    <div className="text-[11px] font-mono text-[#667085] dark:text-[#9CA3AF] truncate">{c.email}</div>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#ECFDF5] text-[#16A34A] border border-[#A7F3D0] shrink-0">
+                  {c.status}
+                </span>
+              </div>
+
+              <div className="text-[11px] text-[#344054] dark:text-slate-300 flex flex-wrap items-center justify-between gap-2">
+                <span className="truncate">{c.ward}</span>
+                <span className="font-mono text-[#667085]">{c.phone}</span>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#EAECF0] dark:border-[#334155] text-[11px] tabular-nums">
+                <div>
+                  <span className="font-bold text-[#2563EB]">{c.reportsSubmitted} submitted</span>{' '}
+                  <span className="text-[#16A34A]">({c.reportsResolved} resolved)</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold font-mono text-[#101828] dark:text-white">Trust {c.trustScore}%</span>
+                  <span className="text-[#667085]">• {c.registeredDate}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#F9FAFB] dark:bg-[#182234] text-[#667085] font-semibold border-b border-[#EAECF0] dark:border-[#334155] text-[11px] uppercase tracking-wider">
               <tr>

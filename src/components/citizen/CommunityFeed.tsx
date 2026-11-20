@@ -30,10 +30,10 @@ export default function CommunityFeed({ complaints, onUpvote, onViewComplaint }:
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-left">
       {/* Left Main Feed (Trending & Active Issues) */}
-      <div className="lg:col-span-8 space-y-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex items-center justify-between">
+      <div className="lg:col-span-8 space-y-4 min-w-0">
+        <div className="p-4 rounded-2xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <Flame className="w-5 h-5 text-amber-500" />
+            <Flame className="w-5 h-5 text-amber-500 shrink-0" />
             <h3 className="font-bold text-sm text-[#111827] dark:text-[#F9FAFB]">
               {i18n.language === 'hi' ? 'चर्चित नागरिक मुद्दे' : 'Trending Public Issues'}
             </h3>
@@ -47,7 +47,7 @@ export default function CommunityFeed({ complaints, onUpvote, onViewComplaint }:
           {trending.map((c) => (
             <div
               key={c.id}
-              className="p-5 rounded-3xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs hover:border-blue-500/50 transition-all flex flex-col sm:flex-row gap-5"
+              className="p-4 sm:p-5 rounded-2xl sm:rounded-3xl bg-white dark:bg-[#111827] border border-[#E5E7EB] dark:border-[#374151] shadow-xs hover:border-blue-500/50 transition-all flex flex-col sm:flex-row gap-4 sm:gap-5"
             >
               <img
                 src={c.images[0] || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800'}
@@ -55,12 +55,12 @@ export default function CommunityFeed({ complaints, onUpvote, onViewComplaint }:
                 onError={(e) => {
                   (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?q=80&w=800';
                 }}
-                className="w-full sm:w-36 h-32 rounded-2xl object-cover shrink-0 bg-slate-100 dark:bg-[#1F2937]"
+                className="w-full sm:w-36 h-40 sm:h-32 rounded-2xl object-cover shrink-0 bg-slate-100 dark:bg-[#1F2937]"
               />
 
-              <div className="flex-1 flex flex-col justify-between">
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="font-mono text-xs font-bold text-[#2563EB] dark:text-[#60A5FA]">
                       {c.ticketNumber}
                     </span>
@@ -80,26 +80,26 @@ export default function CommunityFeed({ complaints, onUpvote, onViewComplaint }:
                   </p>
 
                   <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-2">
-                    <MapPin className="w-3.5 h-3.5" />
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{c.location.ward}</span>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[#374151] flex items-center justify-between">
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-[#374151] flex flex-wrap items-center justify-between gap-2">
                   <button
                     onClick={() => onUpvote(c.id)}
-                    className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-[#60A5FA] font-bold text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
+                    className="min-h-[36px] flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-[#2563EB] dark:text-[#60A5FA] font-bold text-xs hover:bg-blue-100 dark:hover:bg-blue-900/50 cursor-pointer"
                   >
-                    <ThumbsUp className="w-3.5 h-3.5" />
+                    <ThumbsUp className="w-3.5 h-3.5 shrink-0" />
                     <span>{formatNumber(c.upvotes)} {i18n.language === 'hi' ? 'समर्थन' : 'Upvotes'}</span>
                   </button>
 
                   <button
                     onClick={() => onViewComplaint(c)}
-                    className="text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#2563EB] dark:hover:text-[#60A5FA] flex items-center gap-1 cursor-pointer"
+                    className="min-h-[36px] px-2 text-xs font-bold text-slate-700 dark:text-slate-200 hover:text-[#2563EB] dark:hover:text-[#60A5FA] flex items-center gap-1 cursor-pointer"
                   >
                     <span>{i18n.language === 'hi' ? 'विवरण देखें' : 'View Audit Trail'}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                   </button>
                 </div>
               </div>

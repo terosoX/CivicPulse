@@ -64,80 +64,140 @@ export default function DepartmentManagementView({
   const [assigning, setAssigning] = useState(false);
   const [assignError, setAssignError] = useState('');
 
-  // 4 Core Departments specified in requirements
+  const [officersList, setOfficersList] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    api.getOfficers().then((list) => {
+      if (Array.isArray(list)) setOfficersList(list);
+    }).catch(() => {});
+  }, []);
+
+  const buildDeptCard = (
+    id: string,
+    name: string,
+    categoryTag: string,
+    defaultHead: string,
+    defaultEmail: string,
+    defaultPhone: string,
+    matchFn: (c: Complaint) => boolean,
+    fallbackOfficers: CoreDepartmentInfo['officers']
+  ): CoreDepartmentInfo => {
+    const dbDept = departments.find((d) =>
+      d.name.toLowerCase().includes(name.split(' ')[0].toLowerCase()) ||
+      (name.includes('Engineering') && d.name.toLowerCase().includes('road')) ||
+      (name.includes('Sanitation') && d.name.toLowerCase().includes('waste'))
+    );
+    const matching = complaints.filter(matchFn);
+    const active = matching.filter((c) => c.status !== 'Resolved' && c.status !== 'Closed' && c.status !== 'Rejected').length;
+    const resolved = matching.filter((c) => c.status === 'Resolved' || c.status === 'Closed').length;
+    const total = active + resolved;
+    const slaRate = total > 0 ? Number(((resolved / total) * 100).toFixed(1)) : 100.0;
+
+    const resolvedHrs = matching
+      .filter((c) => c.status === 'Resolved' || c.status === 'Closed')
+      .map((c) => (new Date(c.updatedAt).getTime() - new Date(c.createdAt).getTime()) / 3600000)
+      .filter((h) => Number.isFinite(h) && h > 0);
+    const avgResolutionHours =
+      resolvedHrs.length > 0
+        ? Number((resolvedHrs.reduce((a, b) => a + b, 0) / resolvedHrs.length).toFixed(1))
+        : (dbDept?.avgResolutionHours ?? 0);
+
+    const dynamicOfficers = officersList
+      .filter((o) => o.department && o.department.toLowerCase().includes(name.split(' ')[0].toLowerCase()))
+      .map((o) => ({
+        id: o.id,
+        name: o.name,
+        role: 'Municipal Field Officer',
+        phone: o.phone || defaultPhone,
+        dutyStatus: (o.status === 'On Field' ? 'On Field' : 'On Duty') as 'On Duty' | 'On Field' | 'Standby',
+        rating: o.rating || 4.8,
+        assignedCount: matching.filter(
+          (c) =>
+            c.officerAssigned &&
+            c.officerAssigned.toLowerCase().includes(o.name.replace(/^(Eng\.|Dr\.|Er\.)\s*/i, '').split(' ')[0].toLowerCase()) &&
+            c.status !== 'Resolved' &&
+            c.status !== 'Closed'
+        ).length,
+      }));
+
+    return {
+      id,
+      name: dbDept?.name || name,
+      categoryTag,
+      headName: dbDept?.headName || defaultHead,
+      email: dbDept?.email || defaultEmail,
+      phone: dbDept?.phone || defaultPhone,
+      status: active >= 4 ? 'Heavy Demand' : active >= 2 ? 'Elevated Load' : 'Optimal',
+      activeTickets: active,
+      resolvedTickets: resolved,
+      avgResolutionHours,
+      slaRate,
+      officers: dynamicOfficers.length > 0 ? dynamicOfficers : fallbackOfficers,
+    };
+  };
+
   const coreDepartments: CoreDepartmentInfo[] = [
-    {
-      id: 'dept_eng',
-      name: 'Municipal Engineering',
-      categoryTag: 'Roads, Potholes & Public Infrastructure',
-      headName: 'Chief Eng. Vikram Sethi',
-      email: 'engineering@smartcity.gov',
-      phone: '+91 11 2345 6701',
-      status: 'Optimal',
-      activeTickets: complaints.filter((c) => c.category.includes('Road') || c.category.includes('Pothole')).length || 18,
-      resolvedTickets: 74,
-      avgResolutionHours: 21.4,
-      slaRate: 96.2,
-      officers: [
-        { id: 'off_1', name: 'Eng. Vikram Sethi', role: 'Superintending Engineer', phone: '+91 98111 00001', dutyStatus: 'On Duty', rating: 4.9, assignedCount: 6 },
-        { id: 'off_2', name: 'Insp. Rakesh Verma', role: 'Field Asphalt Inspector', phone: '+91 98111 00002', dutyStatus: 'On Field', rating: 4.8, assignedCount: 8 },
-        { id: 'off_3', name: 'Tech. Manoj Solanki', role: 'Pavement Compaction Lead', phone: '+91 98111 00003', dutyStatus: 'On Duty', rating: 4.7, assignedCount: 4 },
-      ],
-    },
-    {
-      id: 'dept_san',
-      name: 'Sanitation',
-      categoryTag: 'Solid Waste, Cleansing & Landfills',
-      headName: 'Dr. Sunita Deshmukh',
-      email: 'sanitation@smartcity.gov',
-      phone: '+91 11 2345 6702',
-      status: 'Optimal',
-      activeTickets: complaints.filter((c) => c.category.includes('Garbage') || c.category.includes('Waste')).length || 12,
-      resolvedTickets: 98,
-      avgResolutionHours: 12.6,
-      slaRate: 98.4,
-      officers: [
-        { id: 'off_4', name: 'Dr. Sunita Deshmukh', role: 'Chief Sanitation Officer', phone: '+91 98111 00004', dutyStatus: 'On Duty', rating: 5.0, assignedCount: 4 },
-        { id: 'off_5', name: 'Supervisor Amit Rawat', role: 'Ward Waste Logistics Lead', phone: '+91 98111 00005', dutyStatus: 'On Field', rating: 4.9, assignedCount: 5 },
-        { id: 'off_6', name: 'Insp. Priya Nair', role: 'Dumping Vigilance Officer', phone: '+91 98111 00006', dutyStatus: 'On Duty', rating: 4.7, assignedCount: 3 },
-      ],
-    },
-    {
-      id: 'dept_water',
-      name: 'Water Supply',
-      categoryTag: 'Potable Pipelines, Drainage & Sewage',
-      headName: 'Eng. Rajesh Pillai',
-      email: 'watersupply@smartcity.gov',
-      phone: '+91 11 2345 6703',
-      status: 'Heavy Demand',
-      activeTickets: complaints.filter((c) => c.category.includes('Water') || c.category.includes('Drainage')).length || 14,
-      resolvedTickets: 56,
-      avgResolutionHours: 25.8,
-      slaRate: 91.8,
-      officers: [
-        { id: 'off_7', name: 'Eng. Rajesh Pillai', role: 'Executive Engineer (Hydraulics)', phone: '+91 98111 00007', dutyStatus: 'On Duty', rating: 4.8, assignedCount: 7 },
-        { id: 'off_8', name: 'Tech. Gurpreet Singh', role: 'Main Valve Specialist', phone: '+91 98111 00008', dutyStatus: 'On Field', rating: 4.6, assignedCount: 5 },
-        { id: 'off_9', name: 'Insp. Kavita Yadav', role: 'Contamination Testing Lead', phone: '+91 98111 00009', dutyStatus: 'Standby', rating: 4.9, assignedCount: 2 },
-      ],
-    },
-    {
-      id: 'dept_elec',
-      name: 'Electrical Maintenance',
-      categoryTag: 'Streetlights, Power Lines & Signals',
-      headName: 'Eng. Deepa Narayan',
-      email: 'electrical@smartcity.gov',
-      phone: '+91 11 2345 6704',
-      status: 'Optimal',
-      activeTickets: complaints.filter((c) => c.category.includes('Streetlight') || c.category.includes('Electrical')).length || 8,
-      resolvedTickets: 68,
-      avgResolutionHours: 16.2,
-      slaRate: 97.1,
-      officers: [
-        { id: 'off_10', name: 'Eng. Deepa Narayan', role: 'Chief Electrical Inspector', phone: '+91 98111 00010', dutyStatus: 'On Duty', rating: 4.9, assignedCount: 3 },
-        { id: 'off_11', name: 'Tech. Rohit Sharma', role: 'High Mast Repair Crew Lead', phone: '+91 98111 00011', dutyStatus: 'On Field', rating: 4.8, assignedCount: 4 },
-        { id: 'off_12', name: 'Tech. Sanjay Kumar', role: 'Cable Fault Locator', phone: '+91 98111 00012', dutyStatus: 'On Duty', rating: 4.7, assignedCount: 1 },
-      ],
-    },
+    buildDeptCard(
+      'dept_eng',
+      'Roads & Infrastructure',
+      'Roads, Potholes, Traffic & Signage',
+      'Eng. Vikram Sethi',
+      'roads@smartcity.gov',
+      '+1 555-0144',
+      (c) => {
+        const assigned = (c.departmentAssigned || '').toLowerCase();
+        return assigned.includes('road') || assigned.includes('engineering') || c.category.includes('Road') || c.category.includes('Pothole') || c.category.includes('Traffic');
+      },
+      [
+        { id: 'off_1', name: 'Eng. Vikram Sethi', role: 'Department Head', phone: '+1 555-0144', dutyStatus: 'On Duty', rating: 4.9, assignedCount: 0 },
+        { id: 'off_2', name: 'Ramesh Kumar (Field Response Specialist)', role: 'Field Response Specialist', phone: '+1 555-0155', dutyStatus: 'On Field', rating: 4.8, assignedCount: 0 },
+      ]
+    ),
+    buildDeptCard(
+      'dept_san',
+      'Solid Waste & Sanitation',
+      'Solid Waste, Cleansing & Landfills',
+      'Dr. Sunita Rao',
+      'sanitation@smartcity.gov',
+      '+1 555-0188',
+      (c) => {
+        const assigned = (c.departmentAssigned || '').toLowerCase();
+        return assigned.includes('waste') || assigned.includes('sanitation') || c.category.includes('Garbage') || c.category.includes('Waste') || c.category.includes('Health');
+      },
+      [
+        { id: 'off_4', name: 'Dr. Sunita Rao', role: 'Chief Sanitation Officer', phone: '+1 555-0188', dutyStatus: 'On Duty', rating: 5.0, assignedCount: 0 },
+      ]
+    ),
+    buildDeptCard(
+      'dept_water',
+      'Water Supply & Sewage',
+      'Potable Pipelines, Drainage & Sewage',
+      'Eng. Ramesh Gupta',
+      'water@smartcity.gov',
+      '+1 555-0122',
+      (c) => {
+        const assigned = (c.departmentAssigned || '').toLowerCase();
+        return assigned.includes('water') || assigned.includes('drainage') || c.category.includes('Water') || c.category.includes('Drainage');
+      },
+      [
+        { id: 'off_7', name: 'Eng. Ramesh Gupta', role: 'Executive Engineer', phone: '+1 555-0122', dutyStatus: 'On Duty', rating: 4.8, assignedCount: 0 },
+      ]
+    ),
+    buildDeptCard(
+      'dept_elec',
+      'Electrical & Streetlighting',
+      'Streetlights, Power Lines & Signals',
+      'Er. Priya Nair',
+      'electricity@smartcity.gov',
+      '+1 555-0166',
+      (c) => {
+        const assigned = (c.departmentAssigned || '').toLowerCase();
+        return assigned.includes('electric') || assigned.includes('light') || c.category.includes('Streetlight') || c.category.includes('Electrical');
+      },
+      [
+        { id: 'off_10', name: 'Er. Priya Nair', role: 'Chief Electrical Engineer', phone: '+1 555-0166', dutyStatus: 'On Duty', rating: 4.9, assignedCount: 0 },
+      ]
+    ),
   ];
 
   const activeDepartment = coreDepartments.find((d) => d.id === selectedDeptId) || coreDepartments[0];
@@ -146,10 +206,10 @@ export default function DepartmentManagementView({
   const deptComplaints = complaints.filter((c) => {
     const assigned = (c.departmentAssigned || '').toLowerCase();
     const deptName = activeDepartment.name.toLowerCase();
-    if (deptName.includes('engineering') && (assigned.includes('road') || assigned.includes('engineering') || c.category.includes('Road') || c.category.includes('Pothole'))) return true;
+    if (deptName.includes('road') && (assigned.includes('road') || assigned.includes('engineering') || c.category.includes('Road') || c.category.includes('Pothole'))) return true;
     if (deptName.includes('sanitation') && (assigned.includes('waste') || assigned.includes('sanitation') || c.category.includes('Garbage') || c.category.includes('Waste'))) return true;
     if (deptName.includes('water') && (assigned.includes('water') || assigned.includes('drainage') || c.category.includes('Water') || c.category.includes('Drainage'))) return true;
-    if (deptName.includes('electrical') && (assigned.includes('electric') || assigned.includes('light') || c.category.includes('Streetlight') || c.category.includes('Electrical'))) return true;
+    if (deptName.includes('electric') && (assigned.includes('electric') || assigned.includes('light') || c.category.includes('Streetlight') || c.category.includes('Electrical'))) return true;
     return false;
   });
 
@@ -199,7 +259,7 @@ export default function DepartmentManagementView({
       </div>
 
       {/* 4 Core Department Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 tabular-nums">
         {coreDepartments.map((dept) => {
           const isSelected = selectedDeptId === dept.id;
 
@@ -243,7 +303,7 @@ export default function DepartmentManagementView({
                     <span className="text-base font-bold text-[#D97706]">{dept.activeTickets} tickets</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-[#667085] block uppercase font-semibold">SLA Adherence</span>
+                    <span className="text-[10px] text-[#667085] block uppercase font-semibold">Resolved Rate</span>
                     <span className="text-base font-bold text-[#16A34A]">{dept.slaRate}%</span>
                   </div>
                 </div>
@@ -322,9 +382,9 @@ export default function DepartmentManagementView({
         </div>
 
         {/* Right: Active Department Complaints & Dispatch Queue (7 cols) */}
-        <div className="lg:col-span-7 p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
-            <div>
+        <div className="lg:col-span-7 min-w-0 p-4 sm:p-5 rounded-xl bg-white dark:bg-[#1E293B] border border-[#EAECF0] dark:border-[#334155] shadow-xs space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#F2F4F7] dark:border-[#2D3748]">
+            <div className="min-w-0">
               <h3 className="text-sm font-bold text-[#101828] dark:text-white">
                 Active Queue: {activeDepartment.name}
               </h3>
@@ -332,12 +392,49 @@ export default function DepartmentManagementView({
                 Grievances currently under investigation or work-in-progress
               </p>
             </div>
-            <span className="text-xs font-semibold text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded">
+            <span className="text-xs font-semibold text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded shrink-0">
               {deptComplaints.length} in queue
             </span>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-[#EAECF0] dark:border-[#334155]">
+          {/* Mobile Queue Cards */}
+          <div className="md:hidden divide-y divide-[#EAECF0] dark:divide-[#334155] rounded-lg border border-[#EAECF0] dark:border-[#334155] overflow-hidden">
+            {deptComplaints.length === 0 ? (
+              <div className="p-6 text-center text-xs text-[#667085]">
+                No active backlog for this department!
+              </div>
+            ) : (
+              deptComplaints.slice(0, 6).map((c) => (
+                <div key={c.id} className="p-3.5 space-y-2 text-xs bg-white dark:bg-[#1E293B]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono font-bold text-[#2563EB]">{c.ticketNumber}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F2F4F7] dark:bg-slate-800 text-[#344054] dark:text-slate-200">
+                        {c.status}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#FEF2F2] text-[#DC2626]">
+                        {c.priority}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="font-semibold text-[#101828] dark:text-white line-clamp-1">{c.title}</div>
+                  <div className="text-[11px] text-[#667085] truncate">{c.location.address}</div>
+                  <button
+                    onClick={() => {
+                      setSelectedTicketForAssign(c);
+                      setSelectedOfficer(activeDepartment.officers[0]?.name || 'Eng. Vikram Sethi');
+                      setAssignModalOpen(true);
+                    }}
+                    className="w-full min-h-[36px] mt-1 px-3 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors shadow-2xs"
+                  >
+                    Assign Crew
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-[#EAECF0] dark:border-[#334155]">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#F9FAFB] dark:bg-[#182234] text-[#667085] text-[10px] font-semibold uppercase tracking-wider">
                 <tr>
@@ -359,11 +456,23 @@ export default function DepartmentManagementView({
                   deptComplaints.slice(0, 6).map((c) => (
                     <tr key={c.id} className="hover:bg-[#F9FAFB] dark:hover:bg-[#283548]">
                       <td className="p-3 font-mono font-bold text-[#2563EB] whitespace-nowrap">
-                        {c.ticketNumber}
+                        <button
+                          type="button"
+                          onClick={() => onSelectComplaint?.(c)}
+                          className="hover:underline"
+                        >
+                          {c.ticketNumber}
+                        </button>
                       </td>
                       <td className="p-3 max-w-[200px]">
-                        <div className="font-semibold text-[#101828] dark:text-white truncate">{c.title}</div>
-                        <div className="text-[10px] text-[#667085] truncate">{c.location.address}</div>
+                        <button
+                          type="button"
+                          onClick={() => onSelectComplaint?.(c)}
+                          className="text-left block w-full hover:text-[#2563EB]"
+                        >
+                          <div className="font-semibold text-[#101828] dark:text-white truncate">{c.title}</div>
+                          <div className="text-[10px] text-[#667085] truncate">{c.location.address}</div>
+                        </button>
                       </td>
                       <td className="p-3 whitespace-nowrap">
                         <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F2F4F7] text-[#344054]">
@@ -398,15 +507,16 @@ export default function DepartmentManagementView({
 
       {/* Crew Assignment Modal */}
       {assignModalOpen && selectedTicketForAssign && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#1E293B] w-full max-w-md rounded-xl border border-[#EAECF0] dark:border-[#334155] shadow-2xl p-5 space-y-4">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1E293B] w-full max-w-md rounded-t-2xl sm:rounded-xl border border-[#EAECF0] dark:border-[#334155] shadow-2xl p-5 pb-safe max-h-[92dvh] overflow-y-auto space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#EAECF0] dark:border-[#334155]">
               <h3 className="font-bold text-sm text-[#101828] dark:text-white">
                 Assign Field Officer & Crew
               </h3>
               <button
                 onClick={() => setAssignModalOpen(false)}
-                className="text-[#667085] hover:text-[#101828]"
+                aria-label="Close assignment modal"
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-[#667085] hover:text-[#101828] hover:bg-slate-100 dark:hover:bg-slate-800 text-lg"
               >
                 &times;
               </button>
@@ -431,7 +541,7 @@ export default function DepartmentManagementView({
               <select
                 value={selectedOfficer}
                 onChange={(e) => setSelectedOfficer(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#111827] dark:text-[#F9FAFB]"
+                className="w-full px-3 py-2.5 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs font-medium text-[#111827] dark:text-[#F9FAFB]"
               >
                 {activeDepartment.officers.map((o) => (
                   <option key={o.id} value={o.name}>
@@ -441,11 +551,11 @@ export default function DepartmentManagementView({
               </select>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="px-3.5 py-2 rounded-lg bg-white dark:bg-[#0F172A] border border-[#D0D5DD] dark:border-[#334155] text-xs font-semibold text-[#344054] dark:text-slate-300"
+                className="w-full sm:w-auto min-h-[40px] px-3.5 py-2 rounded-lg bg-white dark:bg-[#0F172A] border border-[#D0D5DD] dark:border-[#334155] text-xs font-semibold text-[#344054] dark:text-slate-300"
               >
                 Cancel
               </button>
@@ -453,7 +563,7 @@ export default function DepartmentManagementView({
                 type="button"
                 onClick={handleDispatchTicket}
                 disabled={assigning}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors flex items-center gap-1.5"
+                className="w-full sm:w-auto min-h-[40px] px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
               >
                 {assignSuccess ? (
                   <>

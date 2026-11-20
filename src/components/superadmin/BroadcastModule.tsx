@@ -61,13 +61,13 @@ export default function BroadcastModule({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400">
+            <span className="p-2 rounded-xl bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400 shrink-0">
               <Radio className="w-5 h-5 animate-pulse" />
             </span>
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               Emergency Broadcast & Citizen Alert Dispatcher
             </h2>
           </div>
@@ -79,7 +79,7 @@ export default function BroadcastModule({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Composer Form */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#111827] p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm space-y-4">
+        <div className="lg:col-span-2 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm space-y-4">
           <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-[#374151] pb-3">
             <Bell className="w-4 h-4 text-red-500" />
             Compose Emergency Alert
@@ -107,7 +107,7 @@ export default function BroadcastModule({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Severity Tier
@@ -127,13 +127,13 @@ export default function BroadcastModule({
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
                   Dispatch Channels
                 </label>
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   {['SMS', 'Push', 'Web Banner'].map((ch) => (
                     <button
                       type="button"
                       key={ch}
                       onClick={() => toggleChannel(ch)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3 py-2 min-h-[36px] rounded-lg text-xs font-bold transition-all ${
                         selectedChannels.includes(ch)
                           ? 'bg-red-600 text-white shadow-xs'
                           : 'bg-slate-100 dark:bg-[#1F2937] text-slate-600 dark:text-slate-400'
@@ -163,7 +163,7 @@ export default function BroadcastModule({
             <div className="flex justify-end pt-2">
               <button
                 type="submit"
-                className="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center gap-2 transition-all hover:scale-[1.02]"
+                className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-lg shadow-red-600/30 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
               >
                 <Send className="w-4 h-4" />
                 Dispatch Emergency Alert Now

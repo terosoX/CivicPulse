@@ -129,8 +129,8 @@ export default function SystemSettingsModule({
           </h3>
 
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="min-w-0">
                 <div className="font-bold text-slate-900 dark:text-white">Enable CivicPulse AI Auto-Classification</div>
                 <div className="text-slate-500">Automatically predict category, priority, and department for incoming issues</div>
               </div>
@@ -138,7 +138,7 @@ export default function SystemSettingsModule({
                 type="checkbox"
                 checked={formData.aiClassificationEnabled}
                 onChange={(e) => setFormData({ ...formData, aiClassificationEnabled: e.target.checked })}
-                className="w-5 h-5 rounded text-blue-600"
+                className="w-5 h-5 rounded text-blue-600 shrink-0 mt-0.5 sm:mt-0"
               />
             </div>
 
@@ -168,11 +168,11 @@ export default function SystemSettingsModule({
           </h3>
 
           <div className="space-y-4 text-xs">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900">
-              <div>
+            <div className="flex items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900">
+              <div className="min-w-0">
                 <div className="font-bold text-red-700 dark:text-red-300 flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4" />
-                  System Emergency Maintenance Mode
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <span>System Emergency Maintenance Mode</span>
                 </div>
                 <div className="text-red-600/80 dark:text-red-400">
                   When enabled, non-admin citizens will see a maintenance notice banner.
@@ -182,12 +182,12 @@ export default function SystemSettingsModule({
                 type="checkbox"
                 checked={formData.maintenanceMode}
                 onChange={(e) => setFormData({ ...formData, maintenanceMode: e.target.checked })}
-                className="w-5 h-5 rounded text-red-600"
+                className="w-5 h-5 rounded text-red-600 shrink-0 mt-0.5 sm:mt-0"
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-start sm:items-center justify-between gap-3">
+              <div className="min-w-0">
                 <div className="font-bold text-slate-900 dark:text-white">Enforce MFA for All Municipal Admins</div>
                 <div className="text-slate-500">Require 2-Factor Authentication for department staff & admins</div>
               </div>
@@ -195,7 +195,7 @@ export default function SystemSettingsModule({
                 type="checkbox"
                 checked={formData.mfaEnforcedForAllAdmins}
                 onChange={(e) => setFormData({ ...formData, mfaEnforcedForAllAdmins: e.target.checked })}
-                className="w-5 h-5 rounded text-purple-600"
+                className="w-5 h-5 rounded text-purple-600 shrink-0 mt-0.5 sm:mt-0"
               />
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function SystemSettingsModule({
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg shadow-blue-500/25 flex items-center gap-2 transition-all hover:scale-[1.02]"
+            className="w-full sm:w-auto px-6 py-3 min-h-[44px] rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
           >
             <Save className="w-4 h-4" />
             Save Platform Settings

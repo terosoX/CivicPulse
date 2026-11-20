@@ -27,87 +27,23 @@ export default function CitizenFeedbackView({
   const [filterRating, setFilterRating] = useState<'all' | '5' | '4' | '3'>('all');
   const [search, setSearch] = useState('');
 
-  // Sample verified reviews combined with live complaints feedback
-  const sampleReviews = [
-    {
-      id: 'rev_1',
-      ticketNumber: 'CIV-2026-8812',
-      citizenName: 'Aarav Sharma',
-      ward: 'Ward 4 - Central Promenade',
-      department: 'Roads & Infrastructure',
-      rating: 5,
-      date: '2026-11-09',
-      review: 'Field crew filled the dangerous pothole on Promenade Lane in less than 24 hours. Very smooth compaction!',
-      verifiedPhoto: 'https://images.unsplash.com/photo-1541888946425-d0fbb18615f8?q=80&w=400',
-      confirmedResolved: true,
-    },
-    {
-      id: 'rev_2',
-      ticketNumber: 'CIV-2026-7241',
-      citizenName: 'Priya Mehra',
-      ward: 'Ward 2 - East Industrial',
-      department: 'Sanitation & Cleansing',
-      rating: 5,
-      date: '2026-11-08',
-      review: 'Dumpster overflow was completely cleared. Crew disinfected the entire sidewalk area. Excellent job.',
-      verifiedPhoto: 'https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?q=80&w=400',
-      confirmedResolved: true,
-    },
-    {
-      id: 'rev_3',
-      ticketNumber: 'CIV-2026-6190',
-      citizenName: 'Kunal Singhania',
-      ward: 'Ward 3 - South Residential',
-      department: 'Electrical Maintenance',
-      rating: 4,
-      date: '2026-11-07',
-      review: 'Streetlight pole 44 repaired. It was dark for 3 nights. Glad it is back online now.',
-      verifiedPhoto: undefined,
-      confirmedResolved: true,
-    },
-    {
-      id: 'rev_4',
-      ticketNumber: 'CIV-2026-5512',
-      citizenName: 'Sneha Patel',
-      ward: 'Ward 1 - North Sector',
-      department: 'Water Supply & Sewage',
-      rating: 5,
-      date: '2026-11-06',
-      review: 'Pipeline leak addressed before morning rush. Clean pressure restored to our building.',
-      verifiedPhoto: 'https://images.unsplash.com/photo-1584467735871-8e85353a8413?q=80&w=400',
-      confirmedResolved: true,
-    },
-    {
-      id: 'rev_5',
-      ticketNumber: 'CIV-2026-4402',
-      citizenName: 'Vikram Joshi',
-      ward: 'Ward 5 - West Suburbs',
-      department: 'Roads & Infrastructure',
-      rating: 4,
-      date: '2026-11-05',
-      review: 'Paver tiles leveled. Work looks sturdy and safe for senior citizens walking to temple.',
-      verifiedPhoto: undefined,
-      confirmedResolved: true,
-    },
-  ];
-
-  // Combine with complaints having feedback
-  const liveReviews = complaints
-    .filter((c) => c.feedback)
+  // Strictly read real submitted citizen feedback from database complaints
+  const allReviews = complaints
+    .filter((c) => Boolean(c.feedback))
     .map((c) => ({
       id: `live_${c.id}`,
+      complaintObj: c,
       ticketNumber: c.ticketNumber,
       citizenName: c.citizenName,
-      ward: c.location.ward,
-      department: c.departmentAssigned || 'Roads & Infrastructure',
+      ward: c.location?.ward || 'Unspecified Ward',
+      department: c.departmentAssigned || 'Unassigned Department',
       rating: c.feedback!.rating,
       date: c.feedback!.createdAt || c.updatedAt,
       review: c.feedback!.review,
       verifiedPhoto: c.feedback!.verificationImage,
       confirmedResolved: c.feedback!.confirmedResolved,
-    }));
-
-  const allReviews = [...liveReviews, ...sampleReviews];
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const avgRating = allReviews.length > 0
     ? (allReviews.reduce((acc, r) => acc + r.rating, 0) / allReviews.length).toFixed(1)
@@ -123,7 +59,9 @@ export default function CitizenFeedbackView({
     : 0;
 
   const filteredReviews = allReviews.filter((r) => {
-    if (filterRating !== 'all' && r.rating.toString() !== filterRating) return false;
+    if (filterRating === '5' && r.rating !== 5) return false;
+    if (filterRating === '4' && r.rating !== 4) return false;
+    if (filterRating === '3' && r.rating > 3) return false;
     if (search.trim()) {
       const q = search.toLowerCase();
       return (
@@ -166,7 +104,7 @@ export default function CitizenFeedbackView({
           Citizen Feedback & Satisfaction
         </h2>
         <p className="text-xs text-[#667085] dark:text-slate-400 mt-1">
-          Post-resolution citizen reviews, satisfaction scorecards, and departmental sentiment analysis
+          Live post-resolution citizen reviews, satisfaction scorecards, and departmental sentiment computed from stored database records
         </p>
       </div>
 
@@ -184,7 +122,7 @@ export default function CitizenFeedbackView({
           </div>
           <div className="mt-2 text-[11px] text-[#16A34A] font-semibold flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
-            <span>Based on {allReviews.length} verified reviews</span>
+            <span>Based on {allReviews.length} live database review(s)</span>
           </div>
         </div>
 
@@ -240,7 +178,7 @@ export default function CitizenFeedbackView({
               Star Rating Breakdown
             </h3>
             <p className="text-xs text-[#667085] dark:text-[#9CA3AF]">
-              Distribution across {allReviews.length} citizen responses
+              Distribution across {allReviews.length} citizen response(s)
             </p>
           </div>
 
@@ -254,8 +192,8 @@ export default function CitizenFeedbackView({
                     style={{ width: `${sb.pct}%` }}
                   />
                 </div>
-                <span className="w-10 text-right font-mono font-bold text-[#101828] dark:text-white">
-                  {sb.pct}%
+                <span className="w-14 text-right font-mono font-bold text-[#101828] dark:text-white">
+                  {sb.pct}% ({sb.count})
                 </span>
               </div>
             ))}
@@ -273,27 +211,33 @@ export default function CitizenFeedbackView({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            {deptSatisfaction.map((ds, idx) => (
-              <div
-                key={idx}
-                className="p-3.5 rounded-lg border border-[#EAECF0] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#1F2937] flex items-center justify-between text-xs"
-              >
-                <div>
-                  <div className="font-semibold text-[#101828] dark:text-white">{ds.name}</div>
-                  <div className="text-[11px] text-[#667085] mt-0.5">{ds.count} ratings logged</div>
-                </div>
-
-                <div className="text-right">
-                  <div className="text-base font-bold text-[#F59E0B] flex items-center gap-1 justify-end">
-                    <span>{ds.score}</span>
-                    <Star className="w-3.5 h-3.5 fill-[#F59E0B]" />
+          {deptSatisfaction.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#667085] dark:text-slate-400">
+              No department ratings logged yet. Citizen ratings appear here once resolved complaints are reviewed.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              {deptSatisfaction.map((ds, idx) => (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-lg border border-[#EAECF0] dark:border-[#374151] bg-[#F9FAFB] dark:bg-[#1F2937] flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <div className="font-semibold text-[#101828] dark:text-white">{ds.name}</div>
+                    <div className="text-[11px] text-[#667085] mt-0.5">{ds.count} rating(s) logged</div>
                   </div>
-                  <span className="text-[10px] text-[#16A34A] font-medium">{ds.status}</span>
+
+                  <div className="text-right">
+                    <div className="text-base font-bold text-[#F59E0B] flex items-center gap-1 justify-end">
+                      <span>{ds.score}</span>
+                      <Star className="w-3.5 h-3.5 fill-[#F59E0B]" />
+                    </div>
+                    <span className="text-[10px] text-[#16A34A] font-medium">{ds.status}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -309,22 +253,22 @@ export default function CitizenFeedbackView({
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-[#667085] absolute left-2.5 top-2" />
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="w-3.5 h-3.5 text-[#667085] absolute left-2.5 top-2.5" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search reviews or ticket..."
-                className="pl-8 pr-3 py-1 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white placeholder-[#98A2B3]"
+                className="w-full sm:w-56 pl-8 pr-3 py-2 rounded-lg border border-[#D0D5DD] dark:border-[#374151] bg-white dark:bg-[#1F2937] text-xs text-[#101828] dark:text-white placeholder-[#98A2B3]"
               />
             </div>
 
-            <div className="flex items-center gap-1 bg-[#F2F4F7] dark:bg-[#1F2937] p-0.5 rounded-lg text-[11px]">
+            <div className="flex items-center gap-1 bg-[#F2F4F7] dark:bg-[#1F2937] p-1 rounded-lg text-[11px] w-fit">
               <button
                 onClick={() => setFilterRating('all')}
-                className={`px-2 py-1 rounded-md font-semibold ${
+                className={`px-3 py-1.5 rounded-md font-semibold ${
                   filterRating === 'all' ? 'bg-white dark:bg-[#111827] text-[#101828] dark:text-white shadow-2xs' : 'text-[#667085]'
                 }`}
               >
@@ -332,70 +276,97 @@ export default function CitizenFeedbackView({
               </button>
               <button
                 onClick={() => setFilterRating('5')}
-                className={`px-2 py-1 rounded-md font-semibold ${
+                className={`px-3 py-1.5 rounded-md font-semibold ${
                   filterRating === '5' ? 'bg-white dark:bg-[#111827] text-[#101828] dark:text-white shadow-2xs' : 'text-[#667085]'
                 }`}
               >
                 5 ★
+              </button>
+              <button
+                onClick={() => setFilterRating('4')}
+                className={`px-3 py-1.5 rounded-md font-semibold ${
+                  filterRating === '4' ? 'bg-white dark:bg-[#111827] text-[#101828] dark:text-white shadow-2xs' : 'text-[#667085]'
+                }`}
+              >
+                4 ★
+              </button>
+              <button
+                onClick={() => setFilterRating('3')}
+                className={`px-3 py-1.5 rounded-md font-semibold ${
+                  filterRating === '3' ? 'bg-white dark:bg-[#111827] text-[#101828] dark:text-white shadow-2xs' : 'text-[#667085]'
+                }`}
+              >
+                ≤3 ★
               </button>
             </div>
           </div>
         </div>
 
         {/* Reviews List */}
-        <div className="divide-y divide-[#EAECF0] dark:divide-[#334155]">
-          {filteredReviews.map((rev) => (
-            <div key={rev.id} className="py-4 flex flex-col sm:flex-row items-start justify-between gap-4 text-xs">
-              <div className="space-y-1.5 flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono font-bold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded border border-[#BFDBFE]">
-                    {rev.ticketNumber}
-                  </span>
-                  <span className="font-semibold text-[#101828] dark:text-white">
-                    {rev.citizenName}
-                  </span>
-                  <span className="text-[11px] text-[#667085]">
-                    • {rev.ward}
-                  </span>
-                  <span className="text-[10px] text-[#16A34A] bg-[#ECFDF5] px-1.5 py-0.2 rounded font-semibold border border-[#A7F3D0] flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>Verified Citizen</span>
-                  </span>
+        {filteredReviews.length === 0 ? (
+          <div className="py-10 text-center text-xs text-[#667085] dark:text-slate-400">
+            No citizen reviews match the current filter. Submit feedback on a Resolved ticket from the Citizen portal to see it here in real time.
+          </div>
+        ) : (
+          <div className="divide-y divide-[#EAECF0] dark:divide-[#334155]">
+            {filteredReviews.map((rev) => (
+              <div key={rev.id} className="py-4 flex flex-col sm:flex-row items-start justify-between gap-4 text-xs">
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      onClick={() => onSelectComplaint?.(rev.complaintObj)}
+                      className="font-mono font-bold text-[#2563EB] bg-[#EFF6FF] dark:bg-blue-950/40 px-2 py-0.5 rounded border border-[#BFDBFE] dark:border-blue-800 hover:underline flex items-center gap-1"
+                    >
+                      <span>{rev.ticketNumber}</span>
+                      {onSelectComplaint && <ExternalLink className="w-3 h-3" />}
+                    </button>
+                    <span className="font-semibold text-[#101828] dark:text-white">
+                      {rev.citizenName}
+                    </span>
+                    <span className="text-[11px] text-[#667085]">
+                      • {rev.ward}
+                    </span>
+                    <span className="text-[10px] text-[#16A34A] bg-[#ECFDF5] dark:bg-emerald-950/40 px-1.5 py-0.5 rounded font-semibold border border-[#A7F3D0] dark:border-emerald-800 flex items-center gap-1">
+                      <ShieldCheck className="w-3 h-3" />
+                      <span>Verified Citizen</span>
+                    </span>
+                  </div>
+
+                  <div className="flex text-[#F59E0B]">
+                    {'★'.repeat(rev.rating)}
+                    {'☆'.repeat(5 - rev.rating)}
+                  </div>
+
+                  <p className="text-xs text-[#344054] dark:text-slate-300 leading-relaxed font-normal">
+                    "{rev.review}"
+                  </p>
+
+                  <div className="text-[11px] text-[#667085] flex items-center gap-3">
+                    <span>Assigned: <strong>{rev.department}</strong></span>
+                    <span>•</span>
+                    <span>{formatDate(rev.date)}</span>
+                  </div>
                 </div>
 
-                <div className="flex text-[#F59E0B]">
-                  {'★'.repeat(rev.rating)}
-                  {'☆'.repeat(5 - rev.rating)}
-                </div>
-
-                <p className="text-xs text-[#344054] dark:text-slate-300 leading-relaxed font-normal">
-                  "{rev.review}"
-                </p>
-
-                <div className="text-[11px] text-[#667085] flex items-center gap-3">
-                  <span>Assigned: <strong>{rev.department}</strong></span>
-                  <span>•</span>
-                  <span>{formatDate(rev.date)}</span>
-                </div>
+                {/* Verified Ground Photo Preview if present */}
+                {rev.verifiedPhoto && (
+                  <div className="shrink-0">
+                    <img
+                      src={rev.verifiedPhoto}
+                      alt="Citizen verification proof"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                      className="w-20 h-20 rounded-lg object-cover border border-[#EAECF0] dark:border-[#374151] shadow-2xs"
+                    />
+                    <span className="text-[9px] text-[#667085] block text-center mt-1">Ground Proof</span>
+                  </div>
+                )}
               </div>
-
-              {/* Verified Ground Photo Preview if present */}
-              {rev.verifiedPhoto && (
-                <div className="shrink-0">
-                  <img
-                    src={rev.verifiedPhoto}
-                    alt="Citizen verification proof"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                    className="w-20 h-20 rounded-lg object-cover border border-[#EAECF0] dark:border-[#374151] shadow-2xs"
-                  />
-                  <span className="text-[9px] text-[#667085] block text-center mt-1">Ground Proof</span>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

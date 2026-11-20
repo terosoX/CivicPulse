@@ -6,6 +6,12 @@ import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { loadDatabase, saveDatabase } from '../src/db/storage';
 import { Complaint, ComplaintStatus, User } from '../src/types';
+import {
+  analyzeCivicIssue,
+  detectDuplicateComplaint,
+  computeRealDashboardStats,
+  getVisionAdapterStatus,
+} from '../src/ai/civicClassifier';
 
 describe('CivicPulse Core Architecture & Backend Tests', () => {
   const JWT_SECRET = 'civic-smartcity-super-secret-key-2026';
@@ -384,6 +390,77 @@ describe('CivicPulse Core Architecture & Backend Tests', () => {
       assert.equal(isSafeRef('data:image/svg+xml;base64,PHN2Zz4='), false);
       assert.equal(isSafeRef('/uploads/civic_sample.png'), true);
       assert.equal(isSafeRef('https://images.unsplash.com/photo-1515162816999-a0c47dc192f7'), true);
+    });
+  });
+
+  describe('10. Modular AI Engine (Rule-Based Ontology, Vision Stub & Real Stats)', () => {
+    it('classifies English complaints across categories and triggers Critical severity on hazards', async () => {
+      const roadRes = await analyzeCivicIssue('Deep pothole crater', 'Broken asphalt damaging cars near hospital');
+      assert.equal(roadRes.detectedCategory, 'Potholes & Road Damage');
+      assert.equal(roadRes.recommendedDepartment, 'Roads & Infrastructure');
+      assert.equal(roadRes.suggestedPriority, 'High');
+      assert.equal(roadRes.classificationMethod, 'rule-based-bilingual-ontology');
+      assert.equal(roadRes.trainedModelLoaded, false);
+
+      const sparkRes = await analyzeCivicIssue('Exposed live wire', 'Electrical pole sparking in rain danger');
+      assert.equal(sparkRes.detectedCategory, 'Streetlighting & Electrical');
+      assert.equal(sparkRes.suggestedPriority, 'Critical');
+
+      const waterRes = await analyzeCivicIssue('Drinking water pipe burst', 'Main pipeline burst flooding lane');
+      assert.equal(waterRes.detectedCategory, 'Water Leakage & Supply');
+      assert.equal(waterRes.suggestedPriority, 'Critical');
+    });
+
+    it('classifies Devanagari Hindi civic reports accurately', async () => {
+      const hindiRoad = await analyzeCivicIssue('सड़क पर बड़ा गड्ढा', 'मुख्य मार्ग की डामर सड़क टूट गई है');
+      assert.equal(hindiRoad.detectedCategory, 'Potholes & Road Damage');
+      assert.equal(hindiRoad.matchedRuleCount! >= 2, true);
+
+      const hindiWater = await analyzeCivicIssue('पेयजल पाइप लाइन में रिसाव', 'पानी बह रहा है');
+      assert.equal(hindiWater.detectedCategory, 'Water Leakage & Supply');
+    });
+
+    it('flags obvious spam and dummy submissions', async () => {
+      const spamRes = await analyzeCivicIssue('asdf test', 'lorem ipsum dummy issue');
+      assert.equal(spamRes.isFakeOrSpam, true);
+      assert.ok(spamRes.fakeScore > 70);
+    });
+
+    it('honestly reports unloaded VisionClassifierAdapter stub status', () => {
+      const visionStatus = getVisionAdapterStatus();
+      assert.equal(visionStatus.trainedModelLoaded, false);
+      assert.equal(visionStatus.perceptualHashEnabled, true);
+    });
+
+    it('detects geospatial duplicates within 350m and same category using Haversine distance', () => {
+      const db = loadDatabase();
+      const activeSample = db.complaints.find(
+        c => c.status !== 'Resolved' && c.status !== 'Closed' && c.status !== 'Rejected'
+      );
+      assert.ok(activeSample, 'Seed DB should contain at least one active complaint');
+
+      const dupResult = detectDuplicateComplaint(db.complaints, {
+        title: activeSample.title,
+        description: activeSample.description,
+        category: activeSample.category,
+        location: {
+          lat: activeSample.location.lat + 0.0002,
+          lng: activeSample.location.lng + 0.0002,
+        },
+      });
+      assert.equal(dupResult.duplicateFound, true);
+      assert.equal(dupResult.existingComplaint?.id, activeSample.id);
+    });
+
+    it('computes exact dashboard counts, resolution total, and satisfaction rate from DB records', () => {
+      const db = loadDatabase();
+      const stats = computeRealDashboardStats(db.complaints, db.departments);
+      assert.equal(stats.totalComplaints, db.complaints.length);
+      const expectedResolved = db.complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
+      assert.equal(stats.resolved, expectedResolved);
+      const expectedFeedbackCount = db.complaints.filter(c => Boolean(c.feedback)).length;
+      assert.equal(stats.feedbackCount, expectedFeedbackCount);
+      assert.equal(stats.departmentPerformance.length, db.departments.length);
     });
   });
 });

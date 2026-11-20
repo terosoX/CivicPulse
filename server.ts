@@ -24,6 +24,15 @@ import {
 } from './src/data/superAdminSeedData';
 import { Complaint, User, Announcement, DashboardStats, AIAnalysisResult, IssueCategory, PriorityLevel, NotificationItem, AuditLog, SystemSettings, ComplaintCategoryConfig, SecuritySession, SystemHealthMetrics, EmergencyBroadcast, Department, WardPerformanceStats } from './src/types';
 import { loadDatabase, saveDatabase } from './src/db/storage';
+import {
+  analyzeCivicIssue,
+  calculateHammingSimilarity,
+  computeImageHash,
+  computeRealDashboardStats,
+  computeStatisticalForecast,
+  detectDuplicateComplaint,
+  getVisionAdapterStatus,
+} from './src/ai/civicClassifier';
 
 // Self-Managed Storage & Configuration Defaults (100% Optional Environment Variables)
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
@@ -68,212 +77,6 @@ function getOrGenerateJwtSecret(): string {
 }
 
 const JWT_SECRET = getOrGenerateJwtSecret();
-
-// ==============================================================
-// 100% SELF-MANAGED LOCAL AI & MACHINE LEARNING INFERENCE ENGINE
-// Zero External API Keys • On-Premise Computer Vision & Bilingual NLP
-// ==============================================================
-
-// Perceptual Difference Hashing (64-bit dHash simulation from image buffer)
-function computeImageHash(base64Str: string): string {
-  try {
-    const raw = base64Str.replace(/^data:image\/[a-zA-Z]+;base64,/, '');
-    const buf = Buffer.from(raw.slice(0, 4096), 'base64');
-    let hash = 0n;
-    for (let i = 0; i < Math.min(buf.length - 1, 64); i++) {
-      if (buf[i] > buf[i + 1]) {
-        hash |= (1n << BigInt(i));
-      }
-    }
-    return hash.toString(16).padStart(16, '0');
-  } catch {
-    return '0000000000000000';
-  }
-}
-
-function calculateHammingSimilarity(hashA: string, hashB: string): number {
-  if (!hashA || !hashB || hashA === '0000000000000000' || hashB === '0000000000000000') return 0;
-  let matches = 0;
-  const len = Math.min(hashA.length, hashB.length);
-  for (let i = 0; i < len; i++) {
-    if (hashA[i] === hashB[i]) matches++;
-  }
-  return Math.round((matches / len) * 100);
-}
-
-interface CategoryRule {
-  category: IssueCategory;
-  department: string;
-  keywords: string[];
-  defaultPriority: PriorityLevel;
-}
-
-const CIVIC_ONTOLOGY: CategoryRule[] = [
-  {
-    category: 'Potholes & Road Damage',
-    department: 'Roads & Infrastructure',
-    keywords: ['pothole', 'potholes', 'road', 'roads', 'asphalt', 'crater', 'tar', 'paver', 'pavers', 'speed breaker', 'bump', 'crack', 'cracks', 'pavement', 'caved', 'sinkhole', 'divider', 'footpath', 'curb', 'highway', 'gaddha', 'sadak', 'गड्ढा', 'सड़क'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Garbage & Solid Waste',
-    department: 'Solid Waste & Sanitation',
-    keywords: ['garbage', 'trash', 'waste', 'dump', 'dumping', 'bin', 'bins', 'litter', 'debris', 'rubbish', 'refuse', 'overflowing', 'plastic', 'smell', 'foul', 'rotting', 'kachra', 'safai', 'कचरा', 'कूड़ा', 'सफाई'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Water Leakage & Supply',
-    department: 'Water Supply & Sewage',
-    keywords: ['water', 'leak', 'leakage', 'pipeline', 'pipe', 'burst', 'no water', 'low pressure', 'drinking water', 'potable', 'hydrant', 'gushing', 'contamination', 'paani', 'jal', 'पानी', 'पाइप', 'रिसाव'],
-    defaultPriority: 'High',
-  },
-  {
-    category: 'Streetlighting & Electrical',
-    department: 'Electrical & Streetlighting',
-    keywords: ['light', 'lights', 'streetlight', 'lamp', 'dark', 'darkness', 'pole', 'poles', 'wire', 'wires', 'electrical', 'short circuit', 'spark', 'sparking', 'blackout', 'transformer', 'bijli', 'बत्ती', 'बिजली', 'लाइट'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Drainage & Sewage Overflow',
-    department: 'Drainage & Stormwater',
-    keywords: ['drain', 'drainage', 'sewage', 'gutter', 'overflow', 'overflowing', 'stagnant', 'choked', 'choke', 'manhole', 'foul water', 'backflow', 'sludge', 'stormwater', 'flood', 'flooding', 'naala', 'नाला', 'सीवर', 'गटर'],
-    defaultPriority: 'High',
-  },
-  {
-    category: 'Illegal Dumping & Encroachment',
-    department: 'Public Health & Encroachment',
-    keywords: ['encroachment', 'encroached', 'illegal stall', 'squatter', 'footpath blocked', 'unauthorized', 'hawker', 'construction material', 'debris dumped', 'kabza', 'अवैध', 'कब्जा', 'अतिक्रमण'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Fallen Tree & Horticulture',
-    department: 'Parks & Horticulture',
-    keywords: ['tree', 'trees', 'branch', 'branches', 'fallen', 'horticulture', 'roots', 'pruning', 'overgrown', 'foliage', 'ped', 'पेड़', 'शाखा', 'झाड़ी'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Traffic & Signage Issues',
-    department: 'Roads & Infrastructure',
-    keywords: ['traffic', 'signal', 'signals', 'sign', 'signage', 'zebra crossing', 'stop sign', 'jam', 'congestion', 'broken board', 'traffic light', 'यातायात', 'सिग्नल', 'बोर्ड'],
-    defaultPriority: 'Medium',
-  },
-  {
-    category: 'Public Health & Sanitation',
-    department: 'Public Health & Encroachment',
-    keywords: ['mosquito', 'mosquitoes', 'dengue', 'malaria', 'stray dog', 'stray dogs', 'dead animal', 'carcass', 'fumigation', 'sanitation', 'fogging', 'मच्छर', 'मलेरिया', 'बीमारी'],
-    defaultPriority: 'High',
-  },
-  {
-    category: 'Parks & Public Amenities',
-    department: 'Parks & Horticulture',
-    keywords: ['park', 'bench', 'benches', 'playground', 'swing', 'swings', 'fountain', 'public toilet', 'urinal', 'gazebo', 'open gym', 'पार्क', 'झूला', 'शौचालय'],
-    defaultPriority: 'Low',
-  },
-];
-
-const CRITICAL_MARKERS = [
-  'burst', 'sinkhole', 'live wire', 'sparking', 'exposed wire', 'flood', 'flooding', 'manhole open',
-  'open manhole', 'choked hospital', 'major accident', 'block highway', 'life threatening', 'danger', 'hazard',
-  'high tension', 'electrocution', 'collapse', 'आपातकालीन', 'खतरा', 'खुला मैनहोल'
-];
-
-const HIGH_MARKERS = [
-  'urgent', 'major', 'heavy', 'overflowing', 'dark area', 'blackout', 'foul smell', 'contaminated',
-  'school', 'hospital', 'severe', 'urgent repair', 'choked', 'deep crater', 'गंभीर', 'तुरंत'
-];
-
-const LOW_MARKERS = [
-  'minor', 'faded', 'cosmetic', 'small crack', 'paint', 'trim', 'aesthetic', 'beautification', 'dim', 'छोटा'
-];
-
-function analyzeCivicIssueLocal(
-  title: string,
-  description: string,
-  imageBase64?: string,
-  location?: { lat: number; lng: number; address: string }
-): AIAnalysisResult {
-  const combinedText = `${title || ''} ${description || ''}`.toLowerCase();
-  
-  // 1. Category Classification via Lexical & Semantic Ontology Matching
-  let bestCategory: IssueCategory = 'Potholes & Road Damage';
-  let bestDept = 'Roads & Infrastructure';
-  let highestScore = 0;
-  const matchedKeywords: string[] = [];
-
-  for (const rule of CIVIC_ONTOLOGY) {
-    let score = 0;
-    for (const kw of rule.keywords) {
-      if (combinedText.includes(kw.toLowerCase())) {
-        score += kw.length > 5 ? 3 : 2;
-        if (!matchedKeywords.includes(kw)) matchedKeywords.push(kw);
-      }
-    }
-    if (score > highestScore) {
-      highestScore = score;
-      bestCategory = rule.category;
-      bestDept = rule.department;
-    }
-  }
-
-  // 2. Priority Prediction Engine
-  let predictedPriority: PriorityLevel = 'Medium';
-  const hasCritical = CRITICAL_MARKERS.some(m => combinedText.includes(m.toLowerCase()));
-  const hasHigh = HIGH_MARKERS.some(m => combinedText.includes(m.toLowerCase()));
-  const hasLow = LOW_MARKERS.some(m => combinedText.includes(m.toLowerCase()));
-
-  if (hasCritical) {
-    predictedPriority = 'Critical';
-  } else if (hasHigh) {
-    predictedPriority = 'High';
-  } else if (hasLow && highestScore <= 2) {
-    predictedPriority = 'Low';
-  } else {
-    const defaultRule = CIVIC_ONTOLOGY.find(r => r.category === bestCategory);
-    predictedPriority = defaultRule ? defaultRule.defaultPriority : 'Medium';
-  }
-
-  // 3. Spam & Authenticity Verification
-  let fakeScore = 4;
-  if (!combinedText.trim() || combinedText.trim().length < 8) {
-    fakeScore += 45;
-  }
-  if (/(.)\1{4,}/.test(combinedText)) {
-    fakeScore += 35;
-  }
-  if (/test|asdf|qwerty|lorem ipsum|fake issue|dummy/i.test(combinedText)) {
-    fakeScore += 60;
-  }
-  if (imageBase64 && imageBase64.length > 100) {
-    fakeScore = Math.max(2, fakeScore - 15);
-  }
-  fakeScore = Math.min(95, Math.max(2, fakeScore));
-
-  // 4. Classification & Priority Confidence Score (74.0% - 98.8%)
-  const textWordCount = combinedText.trim().split(/\s+/).filter(Boolean).length;
-  let confidence = 74.5;
-  confidence += Math.min(highestScore * 2.4, 14.0);
-  if (hasCritical || hasHigh) confidence += 4.5;
-  if (textWordCount >= 8) confidence += 2.2;
-  if (imageBase64 && imageBase64.length > 100) confidence += 3.1;
-  const priorityConfidence = Number(Math.min(98.8, Math.max(72.0, confidence)).toFixed(1));
-
-  // 5. Concise Executive Summary for Field Staff
-  const addressLabel = location?.address ? `near ${location.address}` : 'in designated municipal ward';
-  const cleanTitle = title?.trim() || 'Civic infrastructure anomaly';
-  const summary = `Local AI classified ${cleanTitle} as ${bestCategory} (${predictedPriority} Priority) assigned to ${bestDept} ${addressLabel}.`;
-
-  return {
-    detectedCategory: bestCategory,
-    suggestedPriority: predictedPriority,
-    recommendedDepartment: bestDept,
-    fakeScore,
-    isFakeOrSpam: fakeScore > 70,
-    duplicateFound: false,
-    summary,
-    keyKeywords: matchedKeywords.length > 0 ? matchedKeywords.slice(0, 5) : ['civic', 'infrastructure', 'municipal'],
-    priorityConfidence,
-  };
-}
 
 const ALLOWED_IMAGE_DATA_URL_REGEX = /^data:(image\/(?:png|jpeg|jpg|webp));base64,([A-Za-z0-9+/=]+)$/;
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -391,6 +194,18 @@ async function startServer() {
     });
   };
 
+  // Optional JWT extractor for routes that support both authenticated users and public reporting
+  const extractOptionalUser = (req: any): { id: string; name: string; role: string; email: string } | null => {
+    try {
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      if (!token) return null;
+      return jwt.verify(token, JWT_SECRET) as { id: string; name: string; role: string; email: string };
+    } catch {
+      return null;
+    }
+  };
+
   // Role-based access control middleware
   const requireRoles = (...allowedRoles: string[]) => (req: any, res: any, next: any) => {
     if (!req.user) {
@@ -409,6 +224,7 @@ async function startServer() {
   // SYSTEM HEALTH & DIAGNOSTICS
   // ==========================================
   app.get('/api/health', (req, res) => {
+    const visionStatus = getVisionAdapterStatus();
     res.json({
       status: 'healthy',
       uptime: process.uptime(),
@@ -417,9 +233,10 @@ async function startServer() {
       usersCount: users.length,
       storageEngine: `Atomic JSON File Database (${DATABASE_FILE})`,
       environment: process.env.NODE_ENV || 'production',
-      aiEngine: AI_ENGINE === 'local_self_managed' 
-        ? 'CivicPulse Local Neural Vision & Bilingual NLP Engine (100% On-Premise, Zero API Keys)' 
+      aiEngine: AI_ENGINE === 'local_self_managed'
+        ? 'CivicPulse Bilingual Rule-Based Ontology & dHash Engine (Zero External API Keys)'
         : AI_ENGINE,
+      visionAdapter: visionStatus,
       offlineReady: true,
       supportedRoles: ['Citizen', 'Administrator', 'Department Officer', 'Field Worker', 'Super Administrator'],
       jwtSecurity: process.env.JWT_SECRET ? 'Environment-Configured' : 'Auto-Generated Cryptographic Key (256-bit Persistent)',
@@ -573,39 +390,19 @@ async function startServer() {
         }
       }
 
-      const aiResult = analyzeCivicIssueLocal(title, description, imageBase64, location);
+      const aiResult = await analyzeCivicIssue(title, description, imageBase64, location);
+      const dupCheck = detectDuplicateComplaint(complaints, {
+        title,
+        description,
+        category: aiResult.detectedCategory,
+        imageBase64,
+        location,
+      });
 
-      // Visual Image Duplicate Detection via Perceptual Hash
-      if (imageBase64 && typeof imageBase64 === 'string') {
-        const queryHash = computeImageHash(imageBase64);
-        for (const existing of complaints) {
-          if (existing.status === 'Resolved' || existing.status === 'Closed') continue;
-          if (existing.images && existing.images.length > 0) {
-            const existingHash = computeImageHash(existing.images[0]);
-            const similarity = calculateHammingSimilarity(queryHash, existingHash);
-            if (similarity > 82) {
-              aiResult.duplicateFound = true;
-              aiResult.duplicateComplaintId = existing.ticketNumber;
-              break;
-            }
-          }
-        }
-      }
-
-      // Proximity Duplicate Detection in current complaints
-      if (location && location.lat && location.lng && !aiResult.duplicateFound) {
-        const duplicate = complaints.find(c => {
-          if (c.status === 'Resolved' || c.status === 'Closed') return false;
-          const latDiff = Math.abs(c.location.lat - location.lat);
-          const lngDiff = Math.abs(c.location.lng - location.lng);
-          // Approx ~150m radius
-          return latDiff < 0.0018 && lngDiff < 0.0018;
-        });
-
-        if (duplicate) {
-          aiResult.duplicateFound = true;
-          aiResult.duplicateComplaintId = duplicate.ticketNumber;
-        }
+      if (dupCheck.duplicateFound && dupCheck.existingComplaint) {
+        aiResult.duplicateFound = true;
+        aiResult.duplicateComplaintId = dupCheck.existingComplaint.ticketNumber;
+        aiResult.duplicateReason = dupCheck.reason;
       }
 
       res.json({ aiAnalysis: aiResult });
@@ -619,7 +416,7 @@ async function startServer() {
     const { transcript } = req.body;
     if (!transcript) return res.status(400).json({ error: 'Transcript required' });
 
-    const analysis = analyzeCivicIssueLocal(transcript.slice(0, 50), transcript);
+    const analysis = await analyzeCivicIssue(transcript.slice(0, 50), transcript);
     res.json({
       title: transcript.length > 60 ? `${transcript.slice(0, 57)}...` : transcript,
       description: transcript,
@@ -743,37 +540,10 @@ async function startServer() {
     }
   });
 
-  // 4. Predictive Analytics Forecast Endpoint (Scikit-Learn Regression Emulated)
+  // 4. Predictive Analytics Forecast Endpoint (Real DB Queue & Moving-Average Estimator)
   app.get('/api/ai/predict', (req, res) => {
     try {
-      const totalComplaints = complaints.length;
-      const resolved = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
-      const resolutionRate = totalComplaints > 0 ? (resolved / totalComplaints) : 0.85;
-
-      const wardForecasts = wardsList.map(w => {
-        const wardTickets = complaints.filter(c => c.location.ward === w.name);
-        const active = wardTickets.filter(c => c.status !== 'Resolved' && c.status !== 'Closed').length;
-        const trendFactor = active > 5 ? 1.15 : 0.95;
-        const forecast7d = Math.round(active * 1.4 * trendFactor);
-        const forecast30d = Math.round(active * 4.2 * trendFactor);
-        return {
-          ward: w.name,
-          currentActive: active,
-          predicted7Days: forecast7d,
-          predicted30Days: forecast30d,
-          riskLevel: active > 8 ? 'High Risk' : active > 4 ? 'Moderate' : 'Stable',
-          recommendedFieldCrews: Math.max(1, Math.ceil(active / 3)),
-        };
-      });
-
-      res.json({
-        model: 'CivicPulse Local Trend Estimator (Scikit-Learn Formulation)',
-        trainedOnRecords: totalComplaints,
-        globalResolutionRate: Math.round(resolutionRate * 100),
-        forecastHorizonDays: [7, 30],
-        wardForecasts,
-        seasonalSurgeAlert: 'Monsoon drainage and road wear surge coefficient: +18%',
-      });
+      res.json(computeStatisticalForecast(complaints, wardsList));
     } catch (err: any) {
       res.status(500).json({ error: err.message || 'Predictive analytics failed' });
     }
@@ -917,6 +687,12 @@ async function startServer() {
       }
     }
 
+    const tokenUser = extractOptionalUser(req);
+    const resolvedCitizenId = tokenUser?.id || citizenId || 'user_citizen_1';
+    const resolvedCitizenName = isAnonymous
+      ? 'Anonymous Citizen'
+      : (tokenUser?.name || citizenName || 'Citizen');
+
     let ticketNumber = `CIV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     while (complaints.some(c => c.ticketNumber === ticketNumber)) {
       ticketNumber = `CIV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -938,8 +714,8 @@ async function startServer() {
       },
       images: images || [],
       beforeImage: images && images[0] ? images[0] : undefined,
-      citizenId: citizenId || 'user_citizen_1',
-      citizenName: citizenName || 'Aarav Sharma',
+      citizenId: resolvedCitizenId,
+      citizenName: resolvedCitizenName,
       isAnonymous: Boolean(isAnonymous),
       departmentAssigned: aiAnalysis?.recommendedDepartment || 'Roads & Infrastructure',
       aiAnalysis,
@@ -947,7 +723,7 @@ async function startServer() {
         {
           status: 'Submitted',
           timestamp: new Date().toISOString(),
-          updatedBy: isAnonymous ? 'Anonymous Citizen' : (citizenName || 'Citizen'),
+          updatedBy: resolvedCitizenName,
           notes: 'Ticket lodged via Smart City Mobile/Web Portal.',
         },
       ],
@@ -1261,41 +1037,21 @@ async function startServer() {
 
   // AI Duplicate Complaint Detection Endpoint
   app.post('/api/ai/check-duplicate', (req, res) => {
-    const { title, description, category, location } = req.body;
-    if (!location || !location.lat || !location.lng) {
-      return res.json({ duplicateFound: false });
-    }
-
-    // Helper: Haversine distance in meters
-    const getDistanceMeters = (lat1: number, lon1: number, lat2: number, lon2: number) => {
-      const R = 6371e3; // meters
-      const φ1 = (lat1 * Math.PI) / 180;
-      const φ2 = (lat2 * Math.PI) / 180;
-      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-      const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    };
-
-    // Find active non-resolved complaints within 300 meters
-    const nearby = complaints.find(c => {
-      if (c.status === 'Resolved' || c.status === 'Closed' || c.status === 'Rejected') return false;
-      const distance = getDistanceMeters(location.lat, location.lng, c.location.lat, c.location.lng);
-      if (distance <= 350) {
-        // Also check if category matches or title keywords overlap
-        const titleOverlap = title && c.title.toLowerCase().split(' ').some((w: string) => w.length > 4 && c.title.toLowerCase().includes(w));
-        return c.category === category || titleOverlap || distance <= 150;
-      }
-      return false;
+    const { title, description, category, location, imageBase64 } = req.body;
+    const dupCheck = detectDuplicateComplaint(complaints, {
+      title,
+      description,
+      category,
+      location,
+      imageBase64,
     });
 
-    if (nearby) {
+    if (dupCheck.duplicateFound && dupCheck.existingComplaint) {
       return res.json({
         duplicateFound: true,
-        existingComplaint: nearby,
-        distanceMeters: Math.round(getDistanceMeters(location.lat, location.lng, nearby.location.lat, nearby.location.lng)),
-        message: `An active ticket (${nearby.ticketNumber}: "${nearby.title}") was already reported nearby. Support it to prioritize resolution!`,
+        existingComplaint: dupCheck.existingComplaint,
+        distanceMeters: dupCheck.distanceMeters,
+        message: `An active ticket (${dupCheck.existingComplaint.ticketNumber}: "${dupCheck.existingComplaint.title}") was already reported nearby. Support it to prioritize resolution!`,
       });
     }
 
@@ -1312,62 +1068,51 @@ async function startServer() {
     res.json(wardPerformanceList);
   });
 
-  // Public Transparency Portal API (No Auth, PII Anonymized)
+  // Public Transparency Portal API (No Auth, PII Anonymized, 100% Real DB Numbers)
   app.get('/api/public/transparency', (req, res) => {
-    const total = complaints.length;
-    const resolved = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
-    const pending = total - resolved;
-
-    // Category distribution
-    const categoryCounts: Record<string, number> = {};
-    complaints.forEach(c => {
-      categoryCounts[c.category] = (categoryCounts[c.category] || 0) + 1;
-    });
-
-    // Ward distribution
-    const wardCounts: Record<string, number> = {};
-    complaints.forEach(c => {
-      const w = c.location.ward || 'General';
-      wardCounts[w] = (wardCounts[w] || 0) + 1;
-    });
+    const realStats = computeRealDashboardStats(complaints, departmentsList);
+    const total = realStats.totalComplaints;
+    const resolved = realStats.resolved;
+    const pending = Math.max(0, total - resolved);
 
     // Anonymized complaints (strip PII)
-    const publicComplaints = complaints.map(c => ({
-      id: c.id,
-      ticketNumber: c.ticketNumber,
-      title: c.title,
-      category: c.category,
-      priority: c.priority,
-      status: c.status,
-      location: {
-        address: c.location.address,
-        ward: c.location.ward,
-        lat: c.location.lat,
-        lng: c.location.lng,
-      },
-      departmentAssigned: c.departmentAssigned,
-      isEmergency: c.isEmergency,
-      upvotes: c.upvotes,
-      createdAt: c.createdAt,
-      updatedAt: c.updatedAt,
-      images: c.images,
-      beforeImage: c.beforeImage,
-      afterImage: c.afterImage,
-      // Citizen Name and phone hidden for privacy
-    }));
+    const publicComplaints = [...complaints]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .map(c => ({
+        id: c.id,
+        ticketNumber: c.ticketNumber,
+        title: c.title,
+        category: c.category,
+        priority: c.priority,
+        status: c.status,
+        location: {
+          address: c.location.address,
+          ward: c.location.ward,
+          lat: c.location.lat,
+          lng: c.location.lng,
+        },
+        departmentAssigned: c.departmentAssigned,
+        isEmergency: c.isEmergency,
+        upvotes: c.upvotes,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+        images: c.images,
+        beforeImage: c.beforeImage,
+        afterImage: c.afterImage,
+      }));
 
     res.json({
       summary: {
-        totalComplaints: total + 3800, // include historic base
-        resolvedComplaints: resolved + 3550,
-        pendingComplaints: pending + 250,
-        resolutionRatePercent: Math.round(((resolved + 3550) / (total + 3800)) * 100),
-        avgResolutionHours: 18.5,
-        citizenSatisfactionPercent: 94.8,
+        totalComplaints: total,
+        resolvedComplaints: resolved,
+        pendingComplaints: pending,
+        resolutionRatePercent: total > 0 ? Math.round((resolved / total) * 100) : 0,
+        avgResolutionHours: realStats.avgResolutionHours,
+        citizenSatisfactionPercent: realStats.citizenSatisfactionRate,
       },
-      categoryCounts,
-      wardCounts,
-      recentComplaints: publicComplaints.slice(0, 20),
+      categoryCounts: realStats.categoryCounts,
+      wardCounts: realStats.wardCounts,
+      recentComplaints: publicComplaints.slice(0, 50),
     });
   });
 
@@ -1578,62 +1323,7 @@ async function startServer() {
   });
 
   app.get('/api/stats/dashboard', (req, res) => {
-    const totalComplaints = complaints.length;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    const todayComplaints = complaints.filter(c => c.createdAt.startsWith(todayStr)).length;
-    const pending = complaints.filter(c => c.status === 'Pending' || c.status === 'Submitted' || c.status === 'Verified').length;
-    const inProgress = complaints.filter(c => c.status === 'Assigned' || c.status === 'Work Started' || c.status === 'In Inspection').length;
-    const resolved = complaints.filter(c => c.status === 'Resolved' || c.status === 'Closed').length;
-    const rejected = complaints.filter(c => c.status === 'Rejected').length;
-    const criticalCount = complaints.filter(c => c.priority === 'Critical').length;
-
-    // Categories Breakdown
-    const categoryCounts: Record<string, number> = {};
-    complaints.forEach(c => {
-      categoryCounts[c.category] = (categoryCounts[c.category] || 0) + 1;
-    });
-
-    // Ward Breakdown
-    const wardCounts: Record<string, number> = {};
-    complaints.forEach(c => {
-      const w = c.location.ward;
-      wardCounts[w] = (wardCounts[w] || 0) + 1;
-    });
-
-    // Monthly Trend
-    const monthlyTrend = [
-      { month: 'Feb', complaints: 85, resolved: 78 },
-      { month: 'Mar', complaints: 110, resolved: 102 },
-      { month: 'Apr', complaints: 145, resolved: 130 },
-      { month: 'May', complaints: 180, resolved: 165 },
-      { month: 'Jun', complaints: 210, resolved: 195 },
-      { month: 'Jul', complaints: totalComplaints, resolved },
-    ];
-
-    // Department Performance
-    const departmentPerformance = INITIAL_DEPARTMENTS.map(d => ({
-      name: d.name,
-      avgHours: d.avgResolutionHours,
-      total: complaints.filter(c => c.departmentAssigned === d.name).length + d.resolvedTickets,
-      resolved: complaints.filter(c => c.departmentAssigned === d.name && (c.status === 'Resolved' || c.status === 'Closed')).length + d.resolvedTickets,
-    }));
-
-    const stats: DashboardStats = {
-      totalComplaints,
-      todayComplaints,
-      pending,
-      inProgress,
-      resolved,
-      rejected,
-      criticalCount,
-      avgResolutionHours: 21.4,
-      citizenSatisfactionRate: 94.2,
-      categoryCounts,
-      wardCounts,
-      monthlyTrend,
-      departmentPerformance,
-    };
-
+    const stats = computeRealDashboardStats(complaints, departmentsList);
     res.json(stats);
   });
 

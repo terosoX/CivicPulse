@@ -94,13 +94,13 @@ export default function UserManagementModule({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Module Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white dark:bg-[#111827] p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400">
+            <span className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 shrink-0">
               <Users className="w-5 h-5" />
             </span>
-            <h2 className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               User & Access Governance
             </h2>
           </div>
@@ -111,7 +111,7 @@ export default function UserManagementModule({
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]"
+          className="w-full sm:w-auto min-h-[42px] px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] shrink-0"
         >
           <Plus className="w-4 h-4" />
           Add New User Account
@@ -162,9 +162,90 @@ export default function UserManagementModule({
         </div>
       </div>
 
-      {/* Users Table */}
+      {/* Users Card List (Mobile) + Table (Tablet/Desktop) */}
       <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#374151] shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="md:hidden divide-y divide-slate-200 dark:divide-slate-800">
+          {filteredUsers.length === 0 ? (
+            <div className="text-center py-10 px-4 text-xs text-slate-400">
+              No users matching criteria found.
+            </div>
+          ) : (
+            filteredUsers.map((u) => (
+              <div key={u.id} className="p-4 space-y-3 text-xs">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-9 h-9 shrink-0 rounded-full bg-slate-100 dark:bg-[#1F2937] text-blue-600 dark:text-blue-400 font-bold flex items-center justify-center border border-slate-200 dark:border-[#374151]">
+                      {u.name.charAt(0)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                        <span className="truncate">{u.name}</span>
+                        {u.mfaEnabled && <Shield className="w-3.5 h-3.5 text-emerald-500 shrink-0" />}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{u.email}</div>
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
+                      (u.status || 'active') === 'active'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        : 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                    }`}
+                  >
+                    {(u.status || 'active').toUpperCase()}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                  <span
+                    className={`px-2.5 py-1 rounded-full font-bold inline-flex items-center gap-1 ${
+                      u.role === 'super_admin'
+                        ? 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-300 dark:border-purple-800'
+                        : u.role === 'admin'
+                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/80 dark:text-blue-300 border border-blue-300 dark:border-blue-800'
+                        : u.role === 'officer'
+                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800'
+                        : 'bg-slate-100 text-slate-700 dark:bg-[#1F2937] dark:text-slate-300'
+                    }`}
+                  >
+                    {u.role === 'super_admin' ? 'Super Admin' : u.role === 'admin' ? 'Municipal Admin' : u.role === 'officer' ? 'Field Officer' : 'Citizen'}
+                  </span>
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Joined {new Date(u.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+
+                <div className="text-[11px] text-slate-600 dark:text-slate-300">
+                  {u.department || 'General Public'} • <span className="text-slate-400">{u.ward || 'All Wards'}</span>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => onResetPassword(u.id)}
+                    className="min-h-[36px] px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-[#1F2937] text-slate-600 dark:text-slate-300 hover:text-amber-600 font-semibold flex items-center gap-1.5"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" /> Reset
+                  </button>
+                  <button
+                    onClick={() => setEditingUser(u)}
+                    className="min-h-[36px] px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 font-semibold flex items-center gap-1.5"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => onDeleteUser(u.id)}
+                    aria-label="Delete Account"
+                    className="min-h-[36px] px-2.5 py-1.5 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 flex items-center justify-center"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-slate-50 dark:bg-[#1F2937]/80 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-[#374151]">
               <tr>
@@ -277,15 +358,16 @@ export default function UserManagementModule({
 
       {/* Add User Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white dark:bg-[#111827] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto p-5 sm:p-6 pb-safe space-y-4 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#374151] pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Create New System Account
               </h3>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600"
+                aria-label="Close add user modal"
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -316,7 +398,7 @@ export default function UserManagementModule({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Account Role</label>
                   <select
@@ -344,7 +426,7 @@ export default function UserManagementModule({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Department</label>
                   <input
@@ -368,17 +450,17 @@ export default function UserManagementModule({
                 </div>
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              <div className="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
+                  className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold"
+                  className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 text-white font-bold"
                 >
                   Create Account
                 </button>
@@ -390,13 +472,17 @@ export default function UserManagementModule({
 
       {/* Edit User Modal */}
       {editingUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-[#111827] rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg p-6 space-y-4 animate-scale-in">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
+          <div className="bg-white dark:bg-[#111827] rounded-t-2xl sm:rounded-2xl border border-slate-200 dark:border-[#374151] shadow-2xl w-full max-w-lg max-h-[92dvh] overflow-y-auto p-5 sm:p-6 pb-safe space-y-4 animate-scale-in">
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#374151] pb-3">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
                 Edit User Governance Settings
               </h3>
-              <button onClick={() => setEditingUser(null)} className="p-1 rounded-lg text-slate-400">
+              <button
+                onClick={() => setEditingUser(null)}
+                aria-label="Close edit user modal"
+                className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -412,7 +498,7 @@ export default function UserManagementModule({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Role</label>
                   <select
@@ -452,17 +538,17 @@ export default function UserManagementModule({
                 />
               </div>
 
-              <div className="pt-3 flex justify-end gap-2">
+              <div className="pt-3 flex flex-col-reverse sm:flex-row justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
+                  className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-slate-100 dark:bg-[#1F2937] text-slate-700 dark:text-slate-300 font-bold"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold"
+                  className="w-full sm:w-auto min-h-[42px] px-4 py-2 rounded-xl bg-blue-600 text-white font-bold"
                 >
                   Save Changes
                 </button>

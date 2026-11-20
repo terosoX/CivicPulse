@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-11-16T13:04:04.313Z",
+  "lastUpdated": "2026-11-20T14:35:38.559Z",
   "users": [
     {
       "id": "user_superadmin_1",
@@ -11,7 +11,7 @@
       "department": "Smart City IT & Digital Governance Directorate",
       "ward": "All Wards (Central Command)",
       "status": "active",
-      "lastLogin": "2026-07-23T08:15:22Z",
+      "lastLogin": "2026-11-20T14:35:38.559Z",
       "dutyStatus": "On Duty",
       "mfaEnabled": true,
       "createdAt": "2025-01-01T00:00:00Z",
@@ -26,7 +26,7 @@
       "department": "Municipal Executive Administration",
       "createdAt": "2025-11-01T08:00:00Z",
       "passwordHash": "$2b$10$hosu6b6VIpCdpk3xfQ3SUuTbpuhmxiwa/3P007qO6DmYxJcBDZ.Be",
-      "lastLogin": "2026-11-16T12:27:03.080Z"
+      "lastLogin": "2026-11-20T14:35:38.309Z"
     },
     {
       "id": "user_officer_1",
@@ -116,7 +116,7 @@
       "ward": "Ward 4 - Central Promenade",
       "department": "Roads & Infrastructure",
       "status": "active",
-      "lastLogin": "2026-07-23T06:00:00Z",
+      "lastLogin": "2026-11-20T14:35:38.418Z",
       "dutyStatus": "On Duty",
       "mfaEnabled": false,
       "createdAt": "2026-01-15T08:00:00Z",
@@ -1144,6 +1144,46 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif_1795185307948",
+      "userId": "user_citizen_1795185307674",
+      "complaintId": "cmp_1795185307713",
+      "title": "Ticket CIV-2026-4000 Updated",
+      "message": "Status changed to 'Resolved'. Pothole compacted and leveled",
+      "type": "status_update",
+      "read": false,
+      "createdAt": "2026-11-20T14:35:07.948Z"
+    },
+    {
+      "id": "notif_1795185307944",
+      "userId": "user_citizen_1795185307674",
+      "complaintId": "cmp_1795185307713",
+      "title": "Ticket CIV-2026-4000 Updated",
+      "message": "Status changed to 'Work Started'. Asphalt compaction crew on site",
+      "type": "status_update",
+      "read": false,
+      "createdAt": "2026-11-20T14:35:07.944Z"
+    },
+    {
+      "id": "notif_1795185307713",
+      "userId": "user_citizen_1795185307674",
+      "complaintId": "cmp_1795185307713",
+      "title": "Complaint Lodged Successfully",
+      "message": "Your complaint CIV-2026-4000 has been logged. Our AI engine is verifying department routing.",
+      "type": "status_update",
+      "read": false,
+      "createdAt": "2026-11-20T14:35:07.713Z"
+    },
+    {
+      "id": "notif_1795185216814",
+      "userId": "user_citizen_1",
+      "complaintId": "cmp_1795185216814",
+      "title": "Complaint Lodged Successfully",
+      "message": "Your complaint CIV-2026-6469 has been logged. Our AI engine is verifying department routing.",
+      "type": "status_update",
+      "read": false,
+      "createdAt": "2026-11-20T14:33:36.814Z"
+    },
     {
       "id": "notif_1",
       "userId": "user_citizen_1",
